@@ -98,11 +98,10 @@ export default function TagComposer({ onCreated }: Props) {
       <form className="composer" onSubmit={submit}>
         <div className="composer__header">
           <div>
-            <span className="composer__kicker">LEAVE YOUR MARK</span>
             <h2>Tag the wall</h2>
+            <span className="composer__subhead">Write it like you mean it.</span>
           </div>
 
-          <span className="composer__hint">No account needed</span>
         </div>
 
         <div className="composer__fields">

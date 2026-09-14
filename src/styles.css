@@ -805,3 +805,1115 @@ a { color: inherit; }
     bottom: 10px;
   }
 }
+
+/* =========================================================
+   VERSION 1.4 — RANDOM WALL / DRAG / ZOOM / EXPORT
+   ========================================================= */
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.wall-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  background: #070709;
+}
+
+.wall-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #070709;
+}
+
+.wall-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.wall-export-surface {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(0,0,0,.03), rgba(0,0,0,.20)),
+    url("/wall-texture.svg") center / 1600px 1000px repeat;
+  box-shadow: inset 0 0 180px rgba(0,0,0,.40);
+}
+
+.wall-export-surface::before,
+.wall-export-surface::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .26;
+}
+
+.wall-export-surface::before {
+  left: -120px;
+  bottom: 60px;
+  width: 720px;
+  height: 420px;
+  background: url("/spray-swoop.svg") center / contain no-repeat;
+  transform: rotate(-8deg);
+}
+
+.wall-export-surface::after {
+  right: -40px;
+  top: 40px;
+  width: 390px;
+  height: 250px;
+  background: url("/paint-drips.svg") center / contain no-repeat;
+}
+
+/* Corner plaque is part of the exported wall. */
+.wall-export-surface .birthday-corner-tag {
+  position: absolute;
+  z-index: 120;
+  top: 34px;
+  left: 38px;
+  width: 350px;
+  padding: 15px 17px 16px;
+  border-left: 6px solid #ff5b2e;
+  background: rgba(7, 7, 9, .74);
+  box-shadow: 6px 7px 0 rgba(0,0,0,.24);
+  backdrop-filter: blur(3px);
+  transform: rotate(-1deg);
+}
+
+.wall-export-surface .birthday-corner-tag__eyebrow {
+  gap: 8px;
+  margin-bottom: 7px;
+  color: #ffcf32;
+  font-size: 12px;
+}
+
+.wall-export-surface .birthday-corner-tag strong {
+  font-size: 18px;
+}
+
+.wall-export-surface .birthday-corner-tag p {
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   RANDOM ABSOLUTE TAG FIELD
+   ========================================================= */
+
+.tag-layer {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+  min-height: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.wall-tag--wall {
+  --tag-density: 1;
+  --tag-rotation: 0deg;
+  --tag-z: 10;
+
+  position: absolute;
+  z-index: var(--tag-z);
+  margin: 0;
+  pointer-events: auto;
+  cursor: zoom-in;
+  transform:
+    rotate(var(--tag-rotation))
+    scale(var(--tag-density));
+  transform-origin: center center;
+  transition:
+    transform .20s ease,
+    filter .20s ease;
+}
+
+.wall-tag--wall:hover,
+.wall-tag--wall:focus-visible {
+  z-index: 200;
+  outline: none;
+  filter: brightness(1.12) saturate(1.05);
+  transform:
+    rotate(calc(var(--tag-rotation) * .3))
+    scale(calc(var(--tag-density) * 1.06));
+}
+
+.wall-tag--wall .wall-tag__paint {
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Keep wall-style typography from v1.2/v1.3, but make focused clone larger. */
+.wall-tag--focus {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: min(760px, calc(100vw - 92px)) !important;
+  min-height: 300px !important;
+  margin: 0 !important;
+  cursor: default;
+  transform: none !important;
+}
+
+.wall-tag--focus .wall-tag__paint {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px 34px;
+}
+
+.wall-tag--focus .wall-tag__message {
+  font-size: clamp(34px, 5vw, 72px) !important;
+}
+
+.wall-tag--focus .wall-tag__signature {
+  margin-top: 18px;
+  font-size: 18px !important;
+}
+
+.wall-tag--focus .wall-tag__photo {
+  width: min(82%, 460px);
+}
+
+/* =========================================================
+   ZOOM ANIMATION
+   ========================================================= */
+
+.tag-focus {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 38px;
+  animation: focus-layer-in .22s ease both;
+}
+
+.tag-focus__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(3,3,5,.78);
+  backdrop-filter: blur(8px);
+  cursor: zoom-out;
+}
+
+.tag-focus__content {
+  position: relative;
+  z-index: 2;
+  animation: tag-zoom-in .46s cubic-bezier(.18,.86,.23,1.08) both;
+}
+
+.tag-focus__close {
+  position: absolute;
+  z-index: 10;
+  top: -14px;
+  right: -14px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 50%;
+  color: #fff;
+  background: #111115;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.32);
+}
+
+@keyframes focus-layer-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tag-zoom-in {
+  0% {
+    opacity: 0;
+    transform: scale(.58) rotate(-3deg);
+    filter: blur(6px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.035) rotate(.4deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* =========================================================
+   MOVABLE COMPOSER
+   ========================================================= */
+
+.floating-composer {
+  position: fixed;
+  z-index: 4000;
+  left: 0;
+  top: 0;
+  width: 470px;
+  max-width: calc(100vw - 28px);
+  will-change: transform;
+}
+
+.floating-composer--collapsed {
+  width: 220px;
+}
+
+.floating-composer__dragbar {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  color: #ffcf32;
+  background: rgba(8,8,10,.96);
+  box-shadow: 0 8px 20px rgba(0,0,0,.20);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.floating-composer__dragbar:active {
+  cursor: grabbing;
+}
+
+.floating-composer__dragbar > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Stardos Stencil", monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.floating-composer__dragbar button {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 4px;
+  color: #aaa69d;
+  background: #141418;
+  cursor: pointer;
+}
+
+.floating-composer .composer {
+  border-radius: 0 0 8px 8px;
+}
+
+.floating-composer .composer__header {
+  margin-bottom: 13px;
+}
+
+.floating-composer .composer__header h2 {
+  margin: 0;
+}
+
+.floating-composer .composer__subhead {
+  display: block;
+  margin-top: 4px;
+  color: #6f6b64;
+  font-size: 8px;
+}
+
+/* Remove old absolute composer positioning. */
+.wall-compose {
+  display: none !important;
+}
+
+/* =========================================================
+   EXPORT CONTROLS
+   ========================================================= */
+
+.export-toolbar {
+  position: fixed;
+  z-index: 3500;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 7px;
+}
+
+.export-toolbar button {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 5px;
+  color: #c8c2b7;
+  background: rgba(10,10,12,.88);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .055em;
+}
+
+.export-toolbar button:hover:not(:disabled) {
+  border-color: rgba(255,207,50,.55);
+  color: #ffcf32;
+}
+
+.export-toolbar button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.wall-export-surface .wall-footer {
+  position: absolute;
+  z-index: 130;
+  right: 28px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #77736b;
+  font-size: 10px;
+}
+
+.wall-export-surface .wall-status {
+  position: absolute;
+  z-index: 150;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 620px) {
+  .floating-composer {
+    width: min(470px, calc(100vw - 28px));
+  }
+
+  .floating-composer--collapsed {
+    width: 220px;
+  }
+
+  .export-toolbar {
+    flex-direction: column;
+  }
+
+  .tag-focus {
+    padding: 24px;
+  }
+
+  .wall-tag--focus {
+    width: calc(100vw - 48px) !important;
+  }
+}
+
+
+/* =========================================================
+   GRAFFITI VISUAL RESTORE 1401
+   Reassert the hand-painted tag treatments after the v1.4
+   random-wall positioning rules. These are intentionally more
+   specific than the generic wall/focus selectors.
+   ========================================================= */
+
+.wall-tag--wall .wall-tag__paint,
+.wall-tag--focus .wall-tag__paint {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* WILDSTYLE */
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__message,
+.wall-tag--focus.wall-tag--wildstyle .wall-tag__message {
+  font-family: "Sedgwick Ave Display", "Permanent Marker", cursive;
+  font-weight: 400;
+  line-height: .94;
+  letter-spacing: .01em;
+  color: #ffcf32;
+  -webkit-text-stroke: 1.5px #101014;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #101014,
+    5px 5px 0 #ff4c1f,
+    -1px -1px 0 rgba(255,255,255,.14);
+}
+
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__signature,
+.wall-tag--focus.wall-tag--wildstyle .wall-tag__signature {
+  font-family: "Permanent Marker", cursive;
+  color: #f7f0e1;
+  transform: rotate(-2deg);
+}
+
+/* HANDSTYLE */
+.wall-tag--wall.wall-tag--handstyle .wall-tag__message,
+.wall-tag--focus.wall-tag--handstyle .wall-tag__message {
+  font-family: "Reenie Beanie", "Permanent Marker", cursive;
+  font-weight: 400;
+  line-height: .80;
+  color: #f4f1e8;
+  text-shadow:
+    1px 2px 0 rgba(0,0,0,.68),
+    0 0 5px rgba(255,255,255,.08);
+}
+
+.wall-tag--wall.wall-tag--handstyle .wall-tag__signature,
+.wall-tag--focus.wall-tag--handstyle .wall-tag__signature {
+  font-family: "Reenie Beanie", cursive;
+  color: #ff5b2e;
+}
+
+/* BUBBLE / THROW-UP */
+.wall-tag--wall.wall-tag--bubble .wall-tag__message,
+.wall-tag--focus.wall-tag--bubble .wall-tag__message {
+  font-family: "Bungee Shade", Impact, sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  color: #74dcff;
+  -webkit-text-stroke: 1px #101014;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #101014,
+    6px 6px 0 #ff4c1f;
+}
+
+.wall-tag--wall.wall-tag--bubble .wall-tag__signature,
+.wall-tag--focus.wall-tag--bubble .wall-tag__signature {
+  font-family: "Permanent Marker", cursive;
+  color: #ffcf32;
+}
+
+/* STENCIL */
+.wall-tag--wall.wall-tag--stencil .wall-tag__message,
+.wall-tag--focus.wall-tag--stencil .wall-tag__message {
+  font-family: "Stardos Stencil", monospace;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .015em;
+  text-transform: uppercase;
+  color: #f3eee2;
+  text-shadow:
+    2px 3px 0 #101014,
+    0 0 8px rgba(255,255,255,.12);
+}
+
+.wall-tag--wall.wall-tag--stencil .wall-tag__signature,
+.wall-tag--focus.wall-tag--stencil .wall-tag__signature {
+  font-family: "Special Elite", monospace;
+  color: #ff5b2e;
+}
+
+/* MARKER */
+.wall-tag--wall.wall-tag--marker .wall-tag__message,
+.wall-tag--focus.wall-tag--marker .wall-tag__message {
+  font-family: "Permanent Marker", cursive;
+  font-weight: 400;
+  line-height: 1.04;
+  color: #ff5b2e;
+  text-shadow:
+    2px 2px 0 #101014,
+    0 0 4px rgba(255,91,46,.16);
+}
+
+.wall-tag--wall.wall-tag--marker .wall-tag__signature,
+.wall-tag--focus.wall-tag--marker .wall-tag__signature {
+  font-family: "Rock Salt", cursive;
+  color: #f5f0e2;
+}
+
+/* SPRAY / THROW-UP */
+.wall-tag--wall.wall-tag--throwup .wall-tag__message,
+.wall-tag--focus.wall-tag--throwup .wall-tag__message {
+  font-family: "Rubik Spray Paint", Impact, sans-serif;
+  font-weight: 400;
+  line-height: .96;
+  color: #ff7bc9;
+  -webkit-text-stroke: 1px #101014;
+  paint-order: stroke fill;
+  text-shadow:
+    4px 4px 0 #101014,
+    7px 7px 0 rgba(80,221,255,.74);
+}
+
+.wall-tag--wall.wall-tag--throwup .wall-tag__signature,
+.wall-tag--focus.wall-tag--throwup .wall-tag__signature {
+  font-family: "Sedgwick Ave Display", cursive;
+  color: #5ce2ff;
+}
+
+/* CHALK / PAINT PEN */
+.wall-tag--wall.wall-tag--chalk .wall-tag__message,
+.wall-tag--focus.wall-tag--chalk .wall-tag__message {
+  font-family: "Rock Salt", cursive;
+  font-weight: 400;
+  line-height: 1.38;
+  color: #d7f6df;
+  text-shadow:
+    0 0 2px rgba(255,255,255,.34),
+    1px 1px 0 #101014;
+}
+
+.wall-tag--wall.wall-tag--chalk .wall-tag__signature,
+.wall-tag--focus.wall-tag--chalk .wall-tag__signature {
+  font-family: "Special Elite", monospace;
+  color: #c2beb4;
+}
+
+/* =========================================================
+   MEDIA BELOW TEXT 1402
+   Photos/GIFs are attachments to the tag, never backgrounds.
+   ========================================================= */
+
+.wall-tag--wall .wall-tag__photo,
+.wall-tag--focus .wall-tag__photo {
+  position: relative;
+  z-index: 2;
+  left: auto;
+  top: auto;
+
+  width: min(150px, 54%);
+  margin: 10px 0 0;
+  padding: 5px 5px 17px;
+
+  transform: rotate(-1.5deg);
+
+  border: 0;
+  background: #eee9dc;
+
+  box-shadow:
+    3px 4px 9px rgba(0,0,0,.40),
+    0 0 0 1px rgba(255,255,255,.10);
+
+  pointer-events: none;
+}
+
+.wall-tag--wall .wall-tag__photo::before,
+.wall-tag--focus .wall-tag__photo::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+
+  top: -7px;
+  left: 50%;
+
+  width: 48px;
+  height: 14px;
+
+  transform: translateX(-50%) rotate(-4deg);
+
+  background: rgba(224,211,167,.72);
+  box-shadow: 0 1px 1px rgba(0,0,0,.12);
+}
+
+.wall-tag--wall .wall-tag__photo img,
+.wall-tag--focus .wall-tag__photo img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+  max-height: 105px;
+
+  object-fit: cover;
+
+  filter:
+    saturate(.92)
+    contrast(1.04);
+}
+
+.wall-tag--focus .wall-tag__photo {
+  width: min(220px, 42%);
+  margin-top: 18px;
+  padding: 7px 7px 22px;
+}
+
+.wall-tag--focus .wall-tag__photo img {
+  max-height: 155px;
+}
+
+/* Alternate media placement slightly so attachments still feel hand-pasted. */
+.wall-tag:nth-child(3n + 2) .wall-tag__photo {
+  margin-left: auto;
+  transform: rotate(1.8deg);
+}
+
+.wall-tag:nth-child(3n) .wall-tag__photo {
+  margin-left: 12%;
+  transform: rotate(-2.4deg);
+}
+
+/* Keep photos compact even when the wall is dense. */
+.wall-tag--wall .wall-tag__paint {
+  align-items: flex-start;
+}
+
+.wall-tag--wall .wall-tag__message,
+.wall-tag--wall .wall-tag__signature {
+  position: relative;
+  z-index: 4;
+}
+
+/* Focus clone keeps the full graffiti treatment instead of flattening it. */
+.wall-tag--focus .wall-tag__message,
+.wall-tag--focus .wall-tag__signature {
+  position: relative;
+  z-index: 4;
+}
+
+
+
+/* =========================================================
+   FLOATING COMPOSER STYLE RESTORE 1601
+   v1.4 moved TagComposer out of .wall-compose and into the
+   draggable .floating-composer wrapper. The original form CSS
+   was still scoped to .wall-compose, so browser-default inputs
+   appeared. Reapply the full visual system to the draggable form.
+   ========================================================= */
+
+.floating-composer .composer-shell {
+  width: 100%;
+  margin: 0;
+}
+
+.floating-composer .composer {
+  width: 100%;
+  padding: 16px;
+
+  border: 1px solid rgba(255,255,255,.12);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0)),
+    rgba(10,10,12,.96);
+
+  box-shadow:
+    0 18px 46px rgba(0,0,0,.38),
+    0 0 0 1px rgba(0,0,0,.28);
+
+  backdrop-filter: blur(8px);
+}
+
+.floating-composer .composer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin: 0 0 14px;
+  padding: 0 0 11px;
+
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.floating-composer .composer__header h2 {
+  margin: 0;
+
+  color: #f4efe5;
+
+  font-family: "Permanent Marker", cursive;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.floating-composer .composer__subhead {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #77736d;
+
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.floating-composer .composer__hint {
+  margin-top: 2px;
+  padding: 4px 7px;
+
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+
+  color: #99948a;
+
+  background: rgba(255,255,255,.025);
+
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+.floating-composer .composer__fields {
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.floating-composer .field {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.floating-composer .field__label-row {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.floating-composer .field__label-row > span {
+  color: #c7c2b8;
+
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .085em;
+
+  text-transform: uppercase;
+}
+
+.floating-composer .field__label-row small {
+  color: #65635e;
+
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.floating-composer .field input,
+.floating-composer .field textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #37373e;
+  border-radius: 5px;
+
+  outline: none;
+
+  color: #f6f1e7;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.018), rgba(255,255,255,0)),
+    #08080a;
+
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+
+  transition:
+    border-color .14s ease,
+    box-shadow .14s ease,
+    background .14s ease;
+}
+
+.floating-composer .field input {
+  height: 40px;
+
+  padding: 0 11px;
+}
+
+.floating-composer .field textarea {
+  min-height: 108px;
+  max-height: 190px;
+
+  padding: 10px 11px;
+
+  resize: vertical;
+
+  line-height: 1.45;
+}
+
+.floating-composer .field input::placeholder,
+.floating-composer .field textarea::placeholder {
+  color: #5f5c64;
+  opacity: 1;
+}
+
+.floating-composer .field input:hover,
+.floating-composer .field textarea:hover {
+  border-color: #484850;
+}
+
+.floating-composer .field input:focus,
+.floating-composer .field textarea:focus {
+  border-color: #ff5b2e;
+
+  background: #0d0d10;
+
+  box-shadow:
+    0 0 0 3px rgba(255,91,46,.09),
+    inset 0 0 0 1px rgba(255,91,46,.04);
+}
+
+/* ---------------------------------------------------------
+   PHOTO / GIF PREVIEW
+   --------------------------------------------------------- */
+
+.floating-composer .composer__preview {
+  position: relative;
+
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 12px;
+  padding: 8px;
+
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 5px;
+
+  background: rgba(255,255,255,.025);
+}
+
+.floating-composer .composer__preview img {
+  width: 72px;
+  height: 54px;
+
+  display: block;
+
+  object-fit: cover;
+
+  border: 3px solid #eee8da;
+
+  transform: rotate(-1deg);
+
+  box-shadow: 2px 3px 0 rgba(0,0,0,.25);
+}
+
+.floating-composer .composer__preview-copy {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.floating-composer .composer__preview-copy strong {
+  overflow: hidden;
+
+  color: #d7d1c7;
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floating-composer .composer__preview-copy span {
+  color: #77736d;
+
+  font-size: 8px;
+}
+
+.floating-composer .preview-remove {
+  width: 25px;
+  min-width: 25px;
+  height: 25px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid #3c3c43;
+  border-radius: 50%;
+
+  color: #bdb8ae;
+
+  background: #141418;
+
+  cursor: pointer;
+}
+
+.floating-composer .preview-remove:hover {
+  border-color: #ff5b2e;
+
+  color: #ffffff;
+}
+
+/* ---------------------------------------------------------
+   VALIDATION
+   --------------------------------------------------------- */
+
+.floating-composer .composer__error {
+  margin-top: 10px;
+  padding: 8px 9px;
+
+  border: 1px solid rgba(255,91,46,.40);
+  border-radius: 4px;
+
+  color: #ffae96;
+
+  background: rgba(255,91,46,.07);
+
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+/* ---------------------------------------------------------
+   ACTIONS
+   --------------------------------------------------------- */
+
+.floating-composer .composer__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-top: 13px;
+  padding-top: 12px;
+
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.floating-composer .button {
+  width: auto;
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 11px;
+
+  box-sizing: border-box;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  line-height: 1;
+
+  transition:
+    transform .12s ease,
+    border-color .12s ease,
+    background .12s ease,
+    box-shadow .12s ease;
+}
+
+.floating-composer .button--secondary {
+  border: 1px solid #3b3b42;
+
+  color: #d3cec4;
+
+  background: #16161a;
+}
+
+.floating-composer .button--secondary:hover {
+  border-color: #575760;
+
+  background: #1c1c21;
+}
+
+.floating-composer .button--primary {
+  min-width: 132px;
+
+  border: 1px solid #151515;
+
+  color: #111;
+
+  background: #ffcf32;
+
+  box-shadow: 3px 3px 0 #ff5b2e;
+}
+
+.floating-composer .button--primary:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+
+  box-shadow: 4px 4px 0 #ff5b2e;
+}
+
+.floating-composer .button--primary:active:not(:disabled) {
+  transform: translate(1px, 1px);
+
+  box-shadow: 1px 1px 0 #ff5b2e;
+}
+
+.floating-composer .button--primary:disabled {
+  opacity: .55;
+
+  cursor: wait;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .floating-composer {
+    width: calc(100vw - 28px);
+  }
+
+  .floating-composer .composer {
+    padding: 14px;
+  }
+
+  .floating-composer .composer__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .floating-composer .composer__actions > div,
+  .floating-composer .composer__actions .button {
+    width: 100%;
+  }
+}
+
