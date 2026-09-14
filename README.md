@@ -139,3 +139,26 @@ Local visual image assets live in `public/`:
 - `paint-drips.svg`
 
 The text itself remains real HTML text for accessibility and responsiveness; CSS graffiti fonts, outlines, strokes, shadows, rotation, and paint effects make the posts look tagged rather than turning every post into a flat image.
+
+## Hidden moderation hotspot
+
+The public wall also has an invisible 72×72 clickable hotspot in the bottom-left
+corner. It opens a credential-gated moderation panel with post deletion.
+
+Before deploying this version, run:
+
+```text
+sql/002_hidden_admin_credentials.sql
+```
+
+The shared credentials configured by that migration are:
+
+```text
+username: ranger
+password: ranger2026
+```
+
+The password check and privileged delete happen in Supabase through
+`SECURITY DEFINER` RPC functions. Do **not** replace this with a service-role key
+in the Vite client. The shared password is suitable for this private birthday-wall
+control, but it should not be treated as high-security authentication.

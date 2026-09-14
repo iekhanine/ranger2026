@@ -48,18 +48,28 @@ function downloadBlob(blob: Blob, filename: string) {
 async function captureWall(element: HTMLElement, scale: number) {
   await document.fonts.ready;
 
-  return html2canvas(element, {
-    backgroundColor: null,
-    scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    width: WALL_WIDTH,
-    height: WALL_HEIGHT,
-    windowWidth: WALL_WIDTH,
-    windowHeight: WALL_HEIGHT,
-    imageTimeout: 15000,
-  });
+  // On-screen, the 1920x1080 tag surface is intentionally transparent so the
+  // browser can render one seamless brick wall from edge to edge. During an
+  // export we temporarily paint the brick texture onto the capture surface so
+  // the PDF/video still includes the wall itself.
+  element.classList.add("wall-export-surface--capture-background");
+
+  try {
+    return await html2canvas(element, {
+      backgroundColor: null,
+      scale,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width: WALL_WIDTH,
+      height: WALL_HEIGHT,
+      windowWidth: WALL_WIDTH,
+      windowHeight: WALL_HEIGHT,
+      imageTimeout: 15000,
+    });
+  } finally {
+    element.classList.remove("wall-export-surface--capture-background");
+  }
 }
 
 function getWallDisplayScale(element: HTMLElement) {

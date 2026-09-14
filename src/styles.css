@@ -1917,3 +1917,851 @@ body,
   }
 }
 
+
+
+/* =========================================================
+   DRAGGABLE WALL TAGS 1901
+   Every wall tag can now be repositioned.
+   ========================================================= */
+
+.wall-tag--wall {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wall-tag--wall.wall-tag--dragging {
+  cursor: grabbing;
+  z-index: calc(var(--tag-z) + 100) !important;
+}
+
+.wall-tag--wall.wall-tag--dragging .wall-tag__paint {
+  filter: saturate(1.04);
+}
+
+.wall-tag--wall:focus-visible {
+  outline: 2px solid rgba(255, 207, 50, 0.8);
+  outline-offset: 4px;
+}
+
+
+
+/* =========================================================
+   RED BRICK WALL + FULL BROWSER CANVAS 2001
+   The physical wall fills the entire browser. The 1920x1080
+   virtual tag surface still scales cleanly inside it so export
+   and placement logic remain deterministic.
+   ========================================================= */
+
+.wall-page,
+.wall-viewport {
+  background:
+    linear-gradient(rgba(32, 8, 5, .04), rgba(22, 6, 5, .15)),
+    url("/wall-texture.svg") center / 1600px 1000px repeat;
+}
+
+.wall-viewport {
+  width: 100vw;
+  height: 100vh;
+  inset: 0;
+}
+
+.wall-export-surface {
+  background:
+    linear-gradient(rgba(26, 7, 5, .02), rgba(28, 7, 5, .16)),
+    url("/wall-texture.svg") center / 1600px 1000px repeat;
+
+  box-shadow: none;
+}
+
+/* Remove the hard visual edge between the virtual 16:9 surface and
+   the rest of the monitor-sized red brick wall. */
+.wall-canvas {
+  filter: none;
+}
+
+/* =========================================================
+   CENTER BIRTHDAY DEDICATION 2002
+   ========================================================= */
+
+.birthday-dedication {
+  position: absolute;
+  z-index: 95;
+
+  left: 50%;
+  top: 50%;
+
+  width: 700px;
+  min-height: 320px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 28px 36px 30px;
+
+  transform: translate(-50%, -50%) rotate(-.35deg);
+
+  text-align: center;
+
+  pointer-events: auto;
+}
+
+.birthday-dedication::before {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  inset: 8px 0;
+
+  border: 1px solid rgba(255, 239, 215, .10);
+  border-radius: 4px;
+
+  background:
+    radial-gradient(circle at 50% 40%, rgba(0,0,0,.34), rgba(0,0,0,.16) 56%, rgba(0,0,0,.06) 100%);
+
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.16),
+    inset 0 0 50px rgba(0,0,0,.16);
+
+  backdrop-filter: blur(1px);
+}
+
+.birthday-dedication__small {
+  margin-bottom: 12px;
+
+  color: #ffcf32;
+
+  font-family: "Stardos Stencil", monospace;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .22em;
+
+  text-transform: uppercase;
+}
+
+.birthday-dedication h1 {
+  max-width: 620px;
+
+  margin: 0;
+
+  color: #fff6e8;
+
+  font-family: "Permanent Marker", cursive;
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.02;
+
+  text-shadow:
+    3px 3px 0 rgba(0,0,0,.54),
+    0 0 14px rgba(255,255,255,.05);
+}
+
+.birthday-dedication p {
+  max-width: 585px;
+
+  margin: 17px 0 0;
+
+  color: #f0d9c6;
+
+  font-family: "Special Elite", monospace;
+  font-size: 19px;
+  line-height: 1.48;
+
+  text-shadow: 2px 2px 0 rgba(0,0,0,.36);
+}
+
+/* =========================================================
+   THE RESORT DISCORD BUTTON 2003
+   A restrained brass / enamel sign instead of a neon CTA.
+   ========================================================= */
+
+.resort-discord-link {
+  min-width: 260px;
+  height: 58px;
+
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+
+  gap: 11px;
+
+  margin-top: 24px;
+  padding: 0 14px 0 11px;
+
+  border: 1px solid rgba(255, 225, 164, .46);
+  border-radius: 8px;
+
+  color: #f5ead6;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0)),
+    rgba(25, 18, 14, .86);
+
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.24),
+    inset 0 0 0 1px rgba(0,0,0,.35);
+
+  text-decoration: none;
+
+  backdrop-filter: blur(4px);
+
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease;
+}
+
+.resort-discord-link:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(255, 207, 50, .84);
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0)),
+    rgba(33, 23, 16, .94);
+
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.30),
+    0 0 18px rgba(255, 207, 50, .09),
+    inset 0 0 0 1px rgba(0,0,0,.38);
+}
+
+.resort-discord-link__mark {
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 207, 50, .42);
+  border-radius: 50%;
+
+  color: #ffcf32;
+
+  background: rgba(255, 207, 50, .055);
+
+  font-family: "Permanent Marker", cursive;
+  font-size: 19px;
+}
+
+.resort-discord-link__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  line-height: 1;
+}
+
+.resort-discord-link__copy small {
+  color: #9f9487;
+
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+.resort-discord-link__copy strong {
+  margin-top: 4px;
+
+  color: #f3e6d1;
+
+  font-family: "Stardos Stencil", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.resort-discord-link__arrow {
+  color: #ffcf32;
+
+  font-size: 16px;
+}
+
+/* =========================================================
+   RESPONSIVE DEDICATION 2004
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .birthday-dedication {
+    width: 620px;
+  }
+
+  .birthday-dedication h1 {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 620px) {
+  .birthday-dedication {
+    width: 560px;
+    min-height: 290px;
+
+    padding: 22px 30px 24px;
+  }
+
+  .birthday-dedication h1 {
+    font-size: 36px;
+  }
+
+  .birthday-dedication p {
+    font-size: 17px;
+  }
+}
+
+
+/* =========================================================
+   SEAMLESS FULL-WIDTH RED BRICK WALL 2101
+   One browser-sized brick surface. The fixed 1920x1080 tag
+   canvas is transparent on-screen so there can never be a
+   second independently aligned brick texture in the middle.
+   ========================================================= */
+
+html,
+body,
+#root,
+.wall-page,
+.wall-viewport {
+  background-color: #7f241b;
+}
+
+.wall-page,
+.wall-viewport {
+  background-image:
+    linear-gradient(rgba(64, 10, 7, .05), rgba(32, 5, 4, .18)),
+    url("/wall-texture.svg");
+  background-position: center center, center center;
+  background-size: auto, 1600px 1000px;
+  background-repeat: repeat, repeat;
+  background-attachment: fixed, fixed;
+}
+
+/* Subtle edge depth belongs to the viewport, not the virtual canvas. */
+.wall-viewport::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 180px rgba(30, 4, 3, .26);
+}
+
+.wall-canvas {
+  z-index: 1;
+}
+
+/* Critical seam fix: do NOT paint a second brick texture here on-screen. */
+.wall-export-surface {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Export-only wall paint, enabled briefly by exportWall.ts. */
+.wall-export-surface.wall-export-surface--capture-background {
+  background:
+    linear-gradient(rgba(64, 10, 7, .05), rgba(32, 5, 4, .18)),
+    url("/wall-texture.svg") center center / 1600px 1000px repeat !important;
+}
+
+/* Keep the dedication unmistakably central and readable over the red brick. */
+.birthday-dedication {
+  width: 760px;
+  min-height: 350px;
+  padding: 34px 44px 36px;
+}
+
+.birthday-dedication::before {
+  inset: 0;
+  border-color: rgba(255, 236, 210, .14);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(20, 5, 4, .58), rgba(20, 5, 4, .28) 58%, rgba(20, 5, 4, .10) 100%);
+  box-shadow:
+    0 26px 80px rgba(18, 3, 2, .26),
+    inset 0 0 58px rgba(18, 3, 2, .20);
+}
+
+.birthday-dedication h1 {
+  max-width: 680px;
+  font-size: 50px;
+}
+
+.birthday-dedication p {
+  max-width: 640px;
+  color: #ffe6d5;
+  font-size: 20px;
+}
+
+/* Classier Discord sign: warm brass against the red brick. */
+.resort-discord-link {
+  min-width: 286px;
+  height: 62px;
+  border-color: rgba(255, 222, 153, .58);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,0)),
+    rgba(24, 13, 10, .92);
+  box-shadow:
+    0 14px 34px rgba(17, 3, 2, .30),
+    inset 0 0 0 1px rgba(0,0,0,.34);
+}
+
+.resort-discord-link:hover {
+  transform: translateY(-3px) scale(1.012);
+}
+
+@media (max-width: 900px) {
+  .birthday-dedication {
+    width: 680px;
+  }
+
+  .birthday-dedication h1 {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 620px) {
+  .birthday-dedication {
+    width: 570px;
+    min-height: 310px;
+    padding: 26px 32px 28px;
+  }
+
+  .birthday-dedication h1 {
+    font-size: 38px;
+  }
+
+  .birthday-dedication p {
+    font-size: 18px;
+  }
+}
+
+/* =========================================================
+   HIDDEN WALL MODERATION HOTSPOT 2201
+   Invisible 72x72 control in the bottom-left corner. Clicking
+   it opens a credential-gated moderation panel on top of the wall.
+   ========================================================= */
+
+.hidden-admin-hotspot {
+  position: fixed;
+  z-index: 9997;
+  left: 0;
+  bottom: 0;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  opacity: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.hidden-admin-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hidden-admin-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(9, 3, 2, .78);
+  backdrop-filter: blur(8px);
+  cursor: default;
+}
+
+.hidden-admin-login,
+.hidden-admin-panel {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 224, 170, .20);
+  border-radius: 12px;
+  color: #f7efe4;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)),
+    rgba(19, 12, 10, .97);
+  box-shadow:
+    0 28px 90px rgba(0,0,0,.55),
+    inset 0 0 0 1px rgba(0,0,0,.36);
+}
+
+.hidden-admin-login {
+  width: min(420px, 100%);
+  padding: 30px;
+}
+
+.hidden-admin-kicker {
+  display: block;
+  margin-top: 14px;
+  color: #ffcf32;
+  font-family: "Stardos Stencil", monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.hidden-admin-login h2,
+.hidden-admin-panel h2 {
+  margin: 5px 0 4px;
+  color: #fff5e8;
+  font-size: 24px;
+}
+
+.hidden-admin-login > p,
+.hidden-admin-panel__header p {
+  margin: 0;
+  color: #9f958b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.hidden-admin-login label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 15px;
+}
+
+.hidden-admin-login label span {
+  color: #c9bbae;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.hidden-admin-login input {
+  height: 42px;
+  width: 100%;
+  padding: 0 11px;
+  border: 1px solid #44352f;
+  border-radius: 6px;
+  outline: none;
+  color: #fff8ed;
+  background: #0b0807;
+}
+
+.hidden-admin-login input:focus {
+  border-color: #ffcf32;
+  box-shadow: 0 0 0 3px rgba(255, 207, 50, .08);
+}
+
+.hidden-admin-primary {
+  width: 100%;
+  height: 40px;
+  margin-top: 18px;
+  border: 1px solid #b68a1d;
+  border-radius: 6px;
+  color: #18110b;
+  background: #ffcf32;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.hidden-admin-close {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 50%;
+  color: #cfc2b7;
+  background: rgba(255,255,255,.035);
+  cursor: pointer;
+}
+
+.hidden-admin-login > .hidden-admin-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.hidden-admin-message {
+  margin-top: 13px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 91, 46, .30);
+  border-radius: 6px;
+  color: #ffc0ad;
+  background: rgba(255, 91, 46, .08);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.hidden-admin-panel {
+  width: min(960px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hidden-admin-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.hidden-admin-panel__header .hidden-admin-kicker {
+  margin-top: 0;
+}
+
+.hidden-admin-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hidden-admin-panel__actions > button:not(.hidden-admin-close) {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 6px;
+  color: #d9cdc1;
+  background: rgba(255,255,255,.035);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.hidden-admin-panel > .hidden-admin-message {
+  margin: 12px 18px 0;
+}
+
+.hidden-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  overflow: auto;
+}
+
+.hidden-admin-item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 7px;
+  background: rgba(255,255,255,.025);
+}
+
+.hidden-admin-item img,
+.hidden-admin-item__placeholder {
+  width: 64px;
+  height: 56px;
+  border-radius: 5px;
+}
+
+.hidden-admin-item img {
+  object-fit: cover;
+}
+
+.hidden-admin-item__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(255,255,255,.10);
+  color: #665d55;
+  font-family: "Stardos Stencil", monospace;
+  font-size: 9px;
+}
+
+.hidden-admin-item__copy {
+  min-width: 0;
+}
+
+.hidden-admin-item__copy strong {
+  display: block;
+  color: #fff4e7;
+  font-size: 12px;
+}
+
+.hidden-admin-item__copy p {
+  margin: 4px 0;
+  overflow: hidden;
+  color: #bcb0a5;
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hidden-admin-item__copy small {
+  color: #71665f;
+  font-size: 8px;
+}
+
+.hidden-admin-delete {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 91, 46, .34);
+  border-radius: 6px;
+  color: #ff9c83;
+  background: rgba(255, 91, 46, .065);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hidden-admin-delete:hover:not(:disabled) {
+  border-color: rgba(255, 91, 46, .70);
+  color: #ffd0c3;
+  background: rgba(255, 91, 46, .12);
+}
+
+.hidden-admin-delete:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.hidden-admin-empty {
+  padding: 36px 20px;
+  color: #8f8379;
+  text-align: center;
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  .hidden-admin-overlay {
+    padding: 12px;
+  }
+
+  .hidden-admin-panel {
+    max-height: calc(100vh - 24px);
+  }
+
+  .hidden-admin-panel__header {
+    padding: 16px;
+  }
+
+  .hidden-admin-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .hidden-admin-item img,
+  .hidden-admin-item__placeholder {
+    width: 48px;
+    height: 48px;
+  }
+
+  .hidden-admin-delete {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   LAYOUT / DRAG / COLOR FIXES 2301
+   - top-aligned wall canvas that can fill the full browser width
+   - draggable plaque + dedication boxes
+   - no red signatures against the red brick wall
+   ========================================================= */
+
+.wall-page {
+  min-height: 100vh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.wall-viewport {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.wall-canvas {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform-origin: top center;
+}
+
+.wall-export-surface {
+  overflow: visible;
+}
+
+.wall-export-surface .birthday-corner-tag {
+  left: auto;
+  top: auto;
+  width: 390px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.wall-export-surface .birthday-corner-tag:active {
+  cursor: grabbing;
+}
+
+.birthday-dedication {
+  left: auto;
+  top: auto;
+  transform: rotate(-.35deg);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.birthday-dedication:active {
+  cursor: grabbing;
+}
+
+.wall-tag--handstyle .wall-tag__signature {
+  color: #ffcf32;
+}
+
+.wall-tag--stencil .wall-tag__signature {
+  color: #74dcff;
+}
+
+.wall-tag--marker .wall-tag__signature {
+  color: #f5f0e2;
+}
+
+.wall-tag--chalk .wall-tag__signature {
+  color: #f5f0e2;
+}
+
+@media (max-width: 620px) {
+  .wall-export-surface .birthday-corner-tag {
+    width: 340px;
+  }
+
+  .birthday-dedication {
+    width: 540px;
+    min-height: 300px;
+  }
+}

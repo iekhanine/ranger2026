@@ -72,12 +72,23 @@ export function getDensityScale(tagCount: number) {
 export function buildWallLayout(tags: TagRecord[]) {
   const placements = new Map<string, TagPlacement>();
   const occupied: Rect[] = [
-    // Keep the birthday plaque readable in the upper-left corner.
+    // Keep the Ranger2026 box readable on the far-left side.
     {
-      x: 34,
-      y: 32,
+      x: 20,
+      y: 24,
       width: 390,
-      height: 170,
+      height: 190,
+      rotation: 0,
+      zIndex: 1,
+    },
+
+    // Keep Ranger's main dedication at the top-center by default so
+    // the wall naturally wraps tags around it.
+    {
+      x: 560,
+      y: 24,
+      width: 800,
+      height: 340,
       rotation: 0,
       zIndex: 1,
     },

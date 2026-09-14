@@ -1,4 +1,9 @@
-import type { CSSProperties, KeyboardEvent } from "react";
+import { useRef, useState } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import type { TagRecord } from "../lib/types";
 import type { TagPlacement } from "../lib/wallLayout";
 
@@ -9,6 +14,18 @@ type Props = {
   densityScale?: number;
   mode?: "wall" | "focus";
   onOpen?: (tag: TagRecord) => void;
+  onMove?: (tagId: string, next: { x: number; y: number }) => void;
+  onMoveEnd?: (tagId: string, next: { x: number; y: number }) => void;
+  onBringToFront?: (tagId: string) => void;
+};
+
+type DragState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  moved: boolean;
 };
 
 const variants = [
@@ -21,6 +38,8 @@ const variants = [
   "chalk",
 ];
 
+const DRAG_THRESHOLD = 6;
+
 export default function TagCard({
   tag,
   index,
@@ -28,8 +47,14 @@ export default function TagCard({
   densityScale = 1,
   mode = "wall",
   onOpen,
+  onMove,
+  onMoveEnd,
+  onBringToFront,
 }: Props) {
   const variant = variants[index % variants.length];
+  const dragRef = useRef<DragState | null>(null);
+  const suppressOpenRef = useRef(false);
+  const [dragging, setDragging] = useState(false);
 
   const style = mode === "wall" && placement
     ? ({
@@ -54,13 +79,95 @@ export default function TagCard({
     }
   }
 
+  function onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    if (
+      mode !== "wall" ||
+      !placement ||
+      !onMove ||
+      event.button !== 0
+    ) {
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: placement.x,
+      originY: placement.y,
+      moved: false,
+    };
+
+    suppressOpenRef.current = false;
+    setDragging(true);
+    onBringToFront?.(tag.id);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function onPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (!drag.moved && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+      drag.moved = true;
+      suppressOpenRef.current = true;
+    }
+
+    onMove?.(tag.id, {
+      x: drag.originX + dx,
+      y: drag.originY + dy,
+    });
+  }
+
+  function endDrag(event: ReactPointerEvent<HTMLElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (drag.moved) {
+      suppressOpenRef.current = true;
+      onMoveEnd?.(tag.id, {
+        x: drag.originX + dx,
+        y: drag.originY + dy,
+      });
+    }
+
+    dragRef.current = null;
+    setDragging(false);
+  }
+
+  function onClick(event: React.MouseEvent<HTMLElement>) {
+    if (suppressOpenRef.current) {
+      suppressOpenRef.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    open();
+  }
+
   return (
     <article
-      className={`wall-tag wall-tag--${variant} wall-tag--${mode}`}
+      className={`wall-tag wall-tag--${variant} wall-tag--${mode}${dragging ? " wall-tag--dragging" : ""}`}
       data-wall-tag-id={mode === "wall" ? tag.id : undefined}
       style={style}
-      onClick={open}
+      onClick={onClick}
       onKeyDown={onKeyDown}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       role={mode === "wall" ? "button" : undefined}
       tabIndex={mode === "wall" ? 0 : undefined}
       aria-label={mode === "wall" ? `Open tag from ${tag.name}` : undefined}

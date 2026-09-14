@@ -1,6 +1,8 @@
 import { FileDown, Film, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import DraggableWallBox from "../components/DraggableWallBox";
 import FloatingComposer from "../components/FloatingComposer";
+import HiddenAdminPanel from "../components/HiddenAdminPanel";
 import TagCard from "../components/TagCard";
 import { exportWallPdf, exportWallVideo } from "../lib/exportWall";
 import { getTags } from "../lib/tags";
@@ -12,30 +14,146 @@ import {
   WALL_WIDTH,
 } from "../lib/wallLayout";
 
+type ManualPlacement = {
+  x: number;
+  y: number;
+  zIndex: number;
+};
+
+type WallBoxPosition = {
+  x: number;
+  y: number;
+};
+
+const DRAG_LAYOUT_STORAGE_KEY = "birthdayranger-drag-layout-v2";
+const WALL_BOX_STORAGE_KEY = "birthdayranger-wall-boxes-v1";
+const WALL_MARGIN = 0;
+
+const DEFAULT_WALL_BOX_POSITIONS: Record<"plaque" | "dedication", WallBoxPosition> = {
+  plaque: { x: 22, y: 28 },
+  dedication: { x: 580, y: 28 },
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
 export default function WallPage() {
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [focusedTag, setFocusedTag] = useState<TagRecord | null>(null);
   const [fitScale, setFitScale] = useState(1);
+  const [viewportHeight, setViewportHeight] = useState(1080);
   const [exporting, setExporting] = useState<"pdf" | "video" | null>(null);
+  const [manualPlacements, setManualPlacements] = useState<Record<string, ManualPlacement>>({});
+  const [wallBoxes, setWallBoxes] = useState<Record<"plaque" | "dedication", WallBoxPosition>>(DEFAULT_WALL_BOX_POSITIONS);
   const exportSurfaceRef = useRef<HTMLDivElement>(null);
 
   const densityScale = getDensityScale(tags.length);
-  const wallCrowdScale = Math.max(
-    0.82,
-    1 - Math.max(0, tags.length - 18) * 0.004,
-  );
-  const placements = useMemo(() => buildWallLayout(tags), [tags]);
+  const displayScale = fitScale;
+  const scaledCanvasHeight = WALL_HEIGHT * displayScale;
+
+  const basePlacements = useMemo(() => buildWallLayout(tags), [tags]);
+
+  const placements = useMemo(() => {
+    const merged = new Map(basePlacements);
+
+    tags.forEach((tag) => {
+      const base = basePlacements.get(tag.id);
+      const manual = manualPlacements[tag.id];
+
+      if (base && manual) {
+        merged.set(tag.id, {
+          ...base,
+          x: manual.x,
+          y: manual.y,
+          zIndex: manual.zIndex,
+        });
+      }
+    });
+
+    return merged;
+  }, [basePlacements, manualPlacements, tags]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAG_LAYOUT_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as Record<string, ManualPlacement>;
+      if (parsed && typeof parsed === "object") {
+        setManualPlacements(parsed);
+      }
+    } catch {
+      // Ignore corrupted local drag layout data.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WALL_BOX_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as Partial<Record<"plaque" | "dedication", WallBoxPosition>>;
+      if (parsed && typeof parsed === "object") {
+        setWallBoxes({
+          plaque: parsed.plaque ?? DEFAULT_WALL_BOX_POSITIONS.plaque,
+          dedication: parsed.dedication ?? DEFAULT_WALL_BOX_POSITIONS.dedication,
+        });
+      }
+    } catch {
+      // Ignore corrupted local wall-box data.
+    }
+  }, []);
+
+  useEffect(() => {
+    const validIds = new Set(tags.map((tag) => tag.id));
+
+    setManualPlacements((current) => {
+      let changed = false;
+      const next: Record<string, ManualPlacement> = {};
+
+      Object.entries(current).forEach(([tagId, placement]) => {
+        if (validIds.has(tagId)) {
+          next[tagId] = placement;
+        } else {
+          changed = true;
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }, [tags]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        DRAG_LAYOUT_STORAGE_KEY,
+        JSON.stringify(manualPlacements),
+      );
+    } catch {
+      // Ignore storage quota/private-mode failures.
+    }
+  }, [manualPlacements]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WALL_BOX_STORAGE_KEY, JSON.stringify(wallBoxes));
+    } catch {
+      // Ignore storage quota/private-mode failures.
+    }
+  }, [wallBoxes]);
 
   useEffect(() => {
     function calculateFit() {
-      setFitScale(
-        Math.min(
-          window.innerWidth / WALL_WIDTH,
-          window.innerHeight / WALL_HEIGHT,
-        ),
-      );
+      const widthScale = window.innerWidth / WALL_WIDTH;
+      const heightScale = window.innerHeight / WALL_HEIGHT;
+      const viewportRatio = window.innerWidth / Math.max(window.innerHeight, 1);
+      const wallRatio = WALL_WIDTH / WALL_HEIGHT;
+
+      setFitScale(viewportRatio > wallRatio ? widthScale : Math.min(widthScale, heightScale));
+      setViewportHeight(window.innerHeight);
     }
 
     calculateFit();
@@ -85,6 +203,68 @@ export default function WallPage() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [focusedTag]);
 
+  function moveTag(tagId: string, next: { x: number; y: number }) {
+    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
+    if (!placement) return;
+
+    const x = clamp(
+      next.x,
+      WALL_MARGIN,
+      WALL_WIDTH - placement.width - WALL_MARGIN,
+    );
+
+    const y = clamp(
+      next.y,
+      WALL_MARGIN,
+      WALL_HEIGHT - placement.height - WALL_MARGIN,
+    );
+
+    setManualPlacements((current) => ({
+      ...current,
+      [tagId]: {
+        x,
+        y,
+        zIndex: current[tagId]?.zIndex ?? placement.zIndex,
+      },
+    }));
+  }
+
+  function moveWallBox(box: "plaque" | "dedication", next: WallBoxPosition) {
+    const widths = { plaque: 390, dedication: 760 } as const;
+    const heights = { plaque: 190, dedication: 350 } as const;
+
+    setWallBoxes((current) => ({
+      ...current,
+      [box]: {
+        x: clamp(next.x, 0, WALL_WIDTH - widths[box]),
+        y: clamp(next.y, 0, WALL_HEIGHT - heights[box]),
+      },
+    }));
+  }
+
+  function bringTagToFront(tagId: string) {
+    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
+    if (!placement) return;
+
+    setManualPlacements((current) => {
+      const highestZ = tags.reduce((maxValue, tag) => {
+        const manual = current[tag.id];
+        const base = basePlacements.get(tag.id);
+        const zIndex = manual?.zIndex ?? base?.zIndex ?? 0;
+        return Math.max(maxValue, zIndex);
+      }, 0);
+
+      return {
+        ...current,
+        [tagId]: {
+          x: current[tagId]?.x ?? placement.x,
+          y: current[tagId]?.y ?? placement.y,
+          zIndex: highestZ + 1,
+        },
+      };
+    });
+  }
+
   async function runExport(kind: "pdf" | "video") {
     const surface = exportSurfaceRef.current;
     if (!surface || exporting) return;
@@ -116,27 +296,68 @@ export default function WallPage() {
 
   return (
     <main className="wall-page">
-      <div className="wall-viewport">
+      <div
+        className="wall-viewport"
+        style={{ minHeight: `${Math.max(viewportHeight, scaledCanvasHeight)}px` }}
+      >
         <div
           className="wall-canvas"
           style={{
-            transform: `translate(-50%, -50%) scale(${fitScale * wallCrowdScale})`,
+            transform: `translateX(-50%) scale(${displayScale})`,
           }}
         >
           <div className="wall-export-surface" ref={exportSurfaceRef}>
-            <aside className="birthday-corner-tag">
+            <DraggableWallBox
+              className="birthday-corner-tag"
+              position={wallBoxes.plaque}
+              scale={displayScale}
+              onMove={(next) => moveWallBox("plaque", next)}
+              title="Drag to move the Ranger2026 plaque"
+            >
               <div className="birthday-corner-tag__eyebrow">
                 <Sparkles size={13} />
                 RANGER2026
               </div>
 
-              <strong>HAPPY FUCKING BIRTHDAY.</strong>
+              <strong>HAPPY BIRTHDAY.</strong>
 
               <p>
                 This wall belongs to Ranger&apos;s people. Leave a birthday tag,
                 roast him, post a photo, or just make your mark.
               </p>
-            </aside>
+            </DraggableWallBox>
+
+            <DraggableWallBox
+              className="birthday-dedication"
+              position={wallBoxes.dedication}
+              scale={displayScale}
+              onMove={(next) => moveWallBox("dedication", next)}
+              title="Drag to move Ranger's birthday dedication"
+            >
+              <span className="birthday-dedication__small">FOR RANGER</span>
+
+              <h1>Have a very, very happy birthday.</h1>
+
+              <p>
+                You&apos;re loved more than you know by everyone here.
+              </p>
+
+              <a
+                className="resort-discord-link"
+                href="https://discord.gg/qr6FTrWsGA"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="resort-discord-link__mark">R</span>
+
+                <span className="resort-discord-link__copy">
+                  <small>COME HOME TO</small>
+                  <strong>THE RESORT</strong>
+                </span>
+
+                <span className="resort-discord-link__arrow">↗</span>
+              </a>
+            </DraggableWallBox>
 
             {loading && <div className="wall-status">Loading the wall...</div>}
 
@@ -161,6 +382,9 @@ export default function WallPage() {
                     placement={placement}
                     densityScale={densityScale}
                     onOpen={setFocusedTag}
+                    onMove={moveTag}
+                    onMoveEnd={moveTag}
+                    onBringToFront={bringTagToFront}
                   />
                 );
               })}
@@ -178,6 +402,14 @@ export default function WallPage() {
       <FloatingComposer
         onCreated={(tag) => {
           setTags((current) => [...current, tag]);
+        }}
+      />
+
+      <HiddenAdminPanel
+        tags={tags}
+        onDeleted={(id) => {
+          setTags((current) => current.filter((tag) => tag.id !== id));
+          setFocusedTag((current) => (current?.id === id ? null : current));
         }}
       />
 
