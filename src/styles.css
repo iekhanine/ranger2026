@@ -3164,3 +3164,132 @@ body,
     font-size: 9px !important;
   }
 }
+
+/* =========================================================
+   LEGIBILITY PASS 2701
+   Thin script fonts and media-heavy tags must remain readable on a crowded
+   wall. Short messages keep a real visual floor instead of shrinking to dust.
+   ========================================================= */
+
+/* Reenie Beanie is intentionally thin and stops reading well once the wall
+   scales down. Keep the handwritten feel, but use a heavier marker face. */
+.wall-tag--wall.wall-tag--handstyle .wall-tag__message,
+.wall-tag--focus.wall-tag--handstyle .wall-tag__message {
+  font-family: "Permanent Marker", "Sedgwick Ave Display", cursive !important;
+  font-weight: 400 !important;
+  line-height: 1.18 !important;
+  letter-spacing: .008em;
+  color: #fff8ea !important;
+  text-shadow:
+    1px 2px 0 rgba(0,0,0,.78),
+    0 0 4px rgba(255,255,255,.12) !important;
+}
+
+.wall-tag--wall.wall-tag--handstyle .wall-tag__signature,
+.wall-tag--focus.wall-tag--handstyle .wall-tag__signature {
+  font-family: "Special Elite", monospace !important;
+  color: #ffcf32 !important;
+}
+
+/* Photo attachments are accents, not the main event. Preserve room for the
+   birthday message so adding an image does not force normal text microscopic. */
+.wall-tag--wall .wall-tag__photo {
+  width: min(112px, 36%) !important;
+  margin-top: 8px !important;
+  padding: 4px 4px 14px !important;
+}
+
+.wall-tag--wall .wall-tag__photo img {
+  max-height: 76px !important;
+  object-fit: cover;
+}
+
+.wall-tag--wall .wall-tag__photo::before {
+  width: 40px !important;
+  height: 11px !important;
+  top: -6px !important;
+}
+
+/* Maintain slightly stronger minimum visual sizes for the more delicate wall
+   treatments. Runtime auto-fit can still reduce truly long posts. */
+.wall-tag--wall.wall-tag--handstyle .wall-tag__message {
+  font-size: calc(37px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--chalk .wall-tag__message {
+  font-size: calc(23px * var(--tag-text-scale)) !important;
+  line-height: 1.5 !important;
+}
+
+.wall-tag--wall.wall-tag--marker .wall-tag__message {
+  font-size: calc(32px * var(--tag-text-scale)) !important;
+}
+
+@media (max-width: 700px) {
+  .wall-tag--wall .wall-tag__photo {
+    width: min(104px, 34%) !important;
+  }
+
+  .wall-tag--wall .wall-tag__photo img {
+    max-height: 70px !important;
+  }
+}
+
+/* =========================================================
+   FREE-FLOW WALL TAGS 2801
+   Wall posts are paint on brick, not cards. Width still controls wrapping,
+   but height is content-driven and nothing clips the rendered graffiti.
+   ========================================================= */
+
+.wall-tag--wall {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.wall-tag--wall .wall-tag__paint {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  justify-content: flex-start !important;
+  padding: 8px 10px 10px !important;
+}
+
+.wall-tag--wall .wall-tag__message,
+.wall-tag--wall .wall-tag__signature {
+  overflow: visible !important;
+  max-height: none !important;
+  clip-path: none !important;
+}
+
+.wall-tag--wall .wall-tag__message {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Extra breathing room for outlined/stroked faces. Their shadows and glyph
+   edges are intentionally allowed to paint outside the wrapping measure. */
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__paint,
+.wall-tag--wall.wall-tag--bubble .wall-tag__paint,
+.wall-tag--wall.wall-tag--stencil .wall-tag__paint,
+.wall-tag--wall.wall-tag--throwup .wall-tag__paint {
+  padding: 12px 14px 14px !important;
+}
+
+/* Focus mode should also grow naturally instead of being a fixed-height card. */
+.wall-tag--focus {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 56px);
+  overflow: auto !important;
+}
+
+.wall-tag--focus .wall-tag__paint {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  justify-content: flex-start !important;
+}

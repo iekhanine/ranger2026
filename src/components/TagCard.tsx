@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type {
   CSSProperties,
   KeyboardEvent,
@@ -46,16 +46,26 @@ function getTagTextScale(message: string) {
   const effectiveLength = trimmed.length + Math.max(0, lines.length - 1) * 45;
 
   if (effectiveLength <= 70) return 1;
-  if (effectiveLength <= 140) return 0.90;
-  if (effectiveLength <= 240) return 0.78;
-  if (effectiveLength <= 380) return 0.66;
-  if (effectiveLength <= 560) return 0.55;
-  if (effectiveLength <= 800) return 0.45;
-  if (effectiveLength <= 1100) return 0.36;
-  if (effectiveLength <= 1500) return 0.29;
-  if (effectiveLength <= 2100) return 0.24;
-  if (effectiveLength <= 3000) return 0.20;
-  return 0.17;
+  if (effectiveLength <= 140) return 0.96;
+  if (effectiveLength <= 240) return 0.88;
+  if (effectiveLength <= 380) return 0.78;
+  if (effectiveLength <= 560) return 0.68;
+  if (effectiveLength <= 800) return 0.58;
+  if (effectiveLength <= 1100) return 0.49;
+  if (effectiveLength <= 1500) return 0.41;
+  if (effectiveLength <= 2100) return 0.34;
+  if (effectiveLength <= 3000) return 0.29;
+  return 0.25;
+}
+
+function getMinimumTextScale(message: string, hasMedia: boolean) {
+  const length = message.trim().length;
+
+  if (length <= 140) return hasMedia ? 0.78 : 0.72;
+  if (length <= 380) return hasMedia ? 0.64 : 0.58;
+  if (length <= 800) return 0.46;
+  if (length <= 1500) return 0.34;
+  return 0.24;
 }
 
 export default function TagCard({
@@ -70,8 +80,6 @@ export default function TagCard({
   onBringToFront,
 }: Props) {
   const variant = variants[index % variants.length];
-  const cardRef = useRef<HTMLElement | null>(null);
-  const paintRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const suppressOpenRef = useRef(false);
   const [dragging, setDragging] = useState(false);
@@ -82,7 +90,6 @@ export default function TagCard({
         left: `${placement.x}px`,
         top: `${placement.y}px`,
         width: `${placement.width}px`,
-        height: `${placement.height}px`,
         "--tag-rotation": `${placement.rotation}deg`,
         "--tag-density": `${densityScale}`,
         "--tag-z": `${placement.zIndex}`,
@@ -90,43 +97,6 @@ export default function TagCard({
       } as CSSProperties)
     : ({ "--tag-text-scale": `${textScale}` } as CSSProperties);
 
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-    const paint = paintRef.current;
-    if (!card || !paint) return;
-
-    let scale = textScale;
-    let attempts = 0;
-    let frame = 0;
-    let cancelled = false;
-
-    const fit = () => {
-      if (cancelled) return;
-
-      card.style.setProperty("--tag-text-scale", String(scale));
-
-      frame = window.requestAnimationFrame(() => {
-        if (cancelled) return;
-
-        const overflowing =
-          paint.scrollHeight > paint.clientHeight + 2 ||
-          paint.scrollWidth > paint.clientWidth + 2;
-
-        if (overflowing && scale > 0.10 && attempts < 16) {
-          scale = Math.max(0.10, scale * 0.84);
-          attempts += 1;
-          fit();
-        }
-      });
-    };
-
-    fit();
-
-    return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(frame);
-    };
-  }, [mode, placement?.height, placement?.width, tag.media_url, tag.message, textScale]);
 
   function open() {
     if (mode === "wall") onOpen?.(tag);
@@ -219,7 +189,6 @@ export default function TagCard({
 
   return (
     <article
-      ref={cardRef}
       className={`wall-tag wall-tag--${variant} wall-tag--${mode}${dragging ? " wall-tag--dragging" : ""}`}
       data-wall-tag-id={mode === "wall" ? tag.id : undefined}
       style={style}
@@ -233,7 +202,7 @@ export default function TagCard({
       tabIndex={mode === "wall" ? 0 : undefined}
       aria-label={mode === "wall" ? `Open tag from ${tag.name}` : undefined}
     >
-      <div className="wall-tag__paint" ref={paintRef}>
+      <div className="wall-tag__paint">
         <div className="wall-tag__message">{tag.message}</div>
         <div className="wall-tag__signature">— {tag.name}</div>
 

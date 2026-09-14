@@ -57,24 +57,26 @@ function estimateSize(tag: TagRecord) {
 
   // Keep the wall dense. A post should look like graffiti, not a poster.
   // Long posts get a little more room, but text fitting does the heavy lifting.
-  const width = Math.min(430, 220 + Math.min(210, textPressure * 0.48));
+  const width = Math.min(470, 235 + Math.min(235, textPressure * 0.52));
   const height = Math.min(
-    330,
-    108 + Math.min(130, Math.ceil(textPressure / 160) * 22) + (tag.media_url ? 105 : 0),
+    390,
+    118 + Math.min(165, Math.ceil(textPressure / 150) * 24) + (tag.media_url ? 88 : 0),
   );
 
   return { width, height };
 }
 
 export function getDensityScale(tagCount: number) {
-  if (tagCount <= 4) return 0.94;
-  if (tagCount <= 8) return 0.88;
-  if (tagCount <= 14) return 0.81;
-  if (tagCount <= 22) return 0.73;
-  if (tagCount <= 32) return 0.65;
-  if (tagCount <= 45) return 0.58;
+  // Keep the wall crowded without making short messages unreadably tiny.
+  // Density still tightens as the wall fills, but it never crushes a tag
+  // below roughly three-quarters of its authored size.
+  if (tagCount <= 8) return 1;
+  if (tagCount <= 16) return 0.95;
+  if (tagCount <= 24) return 0.90;
+  if (tagCount <= 36) return 0.84;
+  if (tagCount <= 50) return 0.79;
 
-  return Math.max(0.46, 0.58 - (tagCount - 45) * 0.0035);
+  return Math.max(0.74, 0.79 - (tagCount - 50) * 0.0015);
 }
 
 export function buildWallLayout(tags: TagRecord[]) {
