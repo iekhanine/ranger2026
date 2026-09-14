@@ -52,21 +52,29 @@ function overlapRatio(a: Rect, b: Rect) {
 
 function estimateSize(tag: TagRecord) {
   const messageLength = tag.message.trim().length;
-  const lineWeight = Math.min(4, Math.ceil(messageLength / 75));
+  const lineCount = Math.max(1, tag.message.trim().split(/\r?\n/).length);
+  const textPressure = messageLength + Math.max(0, lineCount - 1) * 38;
 
-  const width = Math.min(455, 270 + Math.min(185, messageLength * 1.45));
+  // Keep the wall dense. A post should look like graffiti, not a poster.
+  // Long posts get a little more room, but text fitting does the heavy lifting.
+  const width = Math.min(430, 220 + Math.min(210, textPressure * 0.48));
   const height = Math.min(
     330,
-    122 + lineWeight * 24 + (tag.media_url ? 132 : 0),
+    108 + Math.min(130, Math.ceil(textPressure / 160) * 22) + (tag.media_url ? 105 : 0),
   );
 
   return { width, height };
 }
 
 export function getDensityScale(tagCount: number) {
-  if (tagCount <= 10) return 1;
+  if (tagCount <= 4) return 0.94;
+  if (tagCount <= 8) return 0.88;
+  if (tagCount <= 14) return 0.81;
+  if (tagCount <= 22) return 0.73;
+  if (tagCount <= 32) return 0.65;
+  if (tagCount <= 45) return 0.58;
 
-  return Math.max(0.46, 1 - (tagCount - 10) * 0.018);
+  return Math.max(0.46, 0.58 - (tagCount - 45) * 0.0035);
 }
 
 export function buildWallLayout(tags: TagRecord[]) {
@@ -85,10 +93,10 @@ export function buildWallLayout(tags: TagRecord[]) {
     // Keep Ranger's main dedication at the top-center by default so
     // the wall naturally wraps tags around it.
     {
-      x: 560,
-      y: 24,
-      width: 800,
-      height: 340,
+      x: 625,
+      y: 18,
+      width: 670,
+      height: 275,
       rotation: 0,
       zIndex: 1,
     },

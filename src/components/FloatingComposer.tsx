@@ -15,18 +15,21 @@ type Position = {
 const PANEL_WIDTH = 470;
 const EDGE = 14;
 
-function initialPosition(): Position {
+function initialPosition(collapsed: boolean): Position {
   if (typeof window === "undefined") return { x: 24, y: 22 };
 
+  const width = collapsed ? 220 : PANEL_WIDTH;
+
   return {
-    x: Math.max(EDGE, window.innerWidth - PANEL_WIDTH - 24),
+    x: Math.max(EDGE, window.innerWidth - width - 24),
     y: 22,
   };
 }
 
 export default function FloatingComposer({ onCreated }: Props) {
-  const [position, setPosition] = useState<Position>(initialPosition);
-  const [collapsed, setCollapsed] = useState(false);
+  const startsCollapsed = typeof window !== "undefined" && window.innerWidth <= 700;
+  const [collapsed, setCollapsed] = useState(startsCollapsed);
+  const [position, setPosition] = useState<Position>(() => initialPosition(startsCollapsed));
   const dragRef = useRef<{
     pointerId: number;
     startX: number;

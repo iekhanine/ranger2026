@@ -162,3 +162,10 @@ The password check and privileged delete happen in Supabase through
 `SECURITY DEFINER` RPC functions. Do **not** replace this with a service-role key
 in the Vite client. The shared password is suitable for this private birthday-wall
 control, but it should not be treated as high-security authentication.
+
+## Long-post + mobile fit update
+
+- Long messages automatically reduce their graffiti font size based on content length.
+- A runtime fit pass measures each rendered post and continues shrinking text until it fits its tag box.
+- Focused/enlarged posts are constrained to the current viewport and auto-fit instead of forcing giant 72px text.
+- On screens 700px wide or smaller, Leave Your Mark starts collapsed and the composer/focus/admin/export controls use mobile-sized layouts.

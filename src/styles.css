@@ -2765,3 +2765,402 @@ body,
     min-height: 300px;
   }
 }
+
+/* =========================================================
+   LONG-POST AUTO ZOOM + MOBILE FIT 2401
+   Long messages progressively reduce their graffiti type size so the
+   entire post remains visible instead of turning into an oversized block.
+   ========================================================= */
+
+.wall-tag {
+  --tag-text-scale: 1;
+}
+
+.wall-tag--wildstyle .wall-tag__message {
+  font-size: calc(49px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--handstyle .wall-tag__message {
+  font-size: calc(60px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--bubble .wall-tag__message {
+  font-size: calc(39px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--stencil .wall-tag__message {
+  font-size: calc(42px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--marker .wall-tag__message {
+  font-size: calc(43px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--throwup .wall-tag__message {
+  font-size: calc(44px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--chalk .wall-tag__message {
+  font-size: calc(27px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall .wall-tag__paint {
+  min-height: inherit;
+  max-height: inherit;
+  overflow: hidden;
+}
+
+.wall-tag--wall .wall-tag__message {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.wall-tag--wall .wall-tag__signature {
+  flex: 0 0 auto;
+}
+
+/* Focused posts use the same content-aware zoom factor rather than jumping
+   every message to a giant 72px presentation. */
+.wall-tag--focus .wall-tag__message {
+  font-size: calc(72px * var(--tag-text-scale)) !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.wall-tag--focus {
+  max-height: calc(100vh - 48px) !important;
+  overflow: hidden;
+}
+
+.wall-tag--focus .wall-tag__paint {
+  min-height: min(300px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  html,
+  body,
+  #root,
+  .wall-page {
+    width: 100%;
+    min-width: 0;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .wall-page,
+  .wall-viewport {
+    min-height: 100dvh;
+  }
+
+  .floating-composer {
+    max-width: calc(100vw - 20px);
+  }
+
+  .floating-composer--collapsed {
+    width: 190px;
+  }
+
+  .floating-composer__dragbar {
+    min-height: 42px;
+  }
+
+  .floating-composer .composer {
+    max-height: calc(100dvh - 70px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .tag-focus {
+    padding: 10px;
+  }
+
+  .tag-focus__content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .wall-tag--focus {
+    width: calc(100vw - 20px) !important;
+    min-height: min(260px, calc(100dvh - 20px)) !important;
+    max-height: calc(100dvh - 20px) !important;
+  }
+
+  .wall-tag--focus .wall-tag__paint {
+    min-height: min(260px, calc(100dvh - 20px));
+    max-height: calc(100dvh - 20px);
+    padding: 16px 18px;
+  }
+
+  .wall-tag--focus .wall-tag__signature {
+    margin-top: 10px;
+    font-size: 14px !important;
+  }
+
+  .wall-tag--focus .wall-tag__photo {
+    width: min(52vw, 210px);
+    max-height: 24dvh;
+  }
+
+  .wall-tag--focus .wall-tag__photo img {
+    max-height: 20dvh;
+  }
+
+  .tag-focus__close {
+    top: 5px;
+    right: 5px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .export-toolbar {
+    left: 8px;
+    bottom: 8px;
+    gap: 5px;
+  }
+
+  .export-toolbar button {
+    height: 30px;
+    padding: 0 8px;
+    font-size: 7px;
+  }
+
+  .hidden-admin-hotspot {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+@media (max-width: 420px) {
+  .floating-composer--collapsed {
+    width: 176px;
+  }
+
+  .floating-composer__dragbar > div {
+    font-size: 8px;
+  }
+
+  .wall-tag--focus .wall-tag__paint {
+    padding: 14px;
+  }
+
+  .export-toolbar button {
+    max-width: 132px;
+    white-space: normal;
+    line-height: 1.1;
+  }
+}
+
+/* Actual runtime fitting gets a real box to measure against. */
+.wall-tag--wall .wall-tag__paint {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  justify-content: center;
+}
+
+.wall-tag--focus .wall-tag__photo {
+  max-height: 24vh;
+}
+
+.wall-tag--focus .wall-tag__photo img {
+  max-height: 20vh;
+  object-fit: contain;
+}
+
+/* =========================================================
+   DENSE WALL TYPOGRAPHY 2501
+   The public wall is intentionally compact: lots of people can leave
+   messages without one short post becoming a giant billboard.
+   ========================================================= */
+
+.wall-tag--wall .wall-tag__paint {
+  padding: 12px 14px 14px !important;
+  overflow: hidden;
+}
+
+.wall-tag--wall .wall-tag__message {
+  padding: .10em .06em .14em;
+  line-height: 1.16 !important;
+  overflow: visible;
+  text-wrap: pretty;
+}
+
+/* Small wall fonts by default. Content-aware --tag-text-scale can only
+   make these smaller, never billboard-sized. */
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__message {
+  font-size: calc(28px * var(--tag-text-scale)) !important;
+  line-height: 1.12 !important;
+}
+
+.wall-tag--wall.wall-tag--handstyle .wall-tag__message {
+  font-size: calc(31px * var(--tag-text-scale)) !important;
+  line-height: 1.06 !important;
+}
+
+.wall-tag--wall.wall-tag--bubble .wall-tag__message {
+  font-size: calc(25px * var(--tag-text-scale)) !important;
+  line-height: 1.13 !important;
+}
+
+.wall-tag--wall.wall-tag--stencil .wall-tag__message {
+  font-size: calc(24px * var(--tag-text-scale)) !important;
+  line-height: 1.20 !important;
+  padding-top: .18em;
+  padding-bottom: .22em;
+}
+
+.wall-tag--wall.wall-tag--marker .wall-tag__message {
+  font-size: calc(27px * var(--tag-text-scale)) !important;
+  line-height: 1.16 !important;
+}
+
+.wall-tag--wall.wall-tag--throwup .wall-tag__message {
+  font-size: calc(26px * var(--tag-text-scale)) !important;
+  line-height: 1.14 !important;
+}
+
+.wall-tag--wall.wall-tag--chalk .wall-tag__message {
+  font-size: calc(18px * var(--tag-text-scale)) !important;
+  line-height: 1.45 !important;
+}
+
+.wall-tag--wall .wall-tag__signature {
+  margin-top: 4px !important;
+  font-size: 9px !important;
+  line-height: 1.25 !important;
+}
+
+/* Text strokes/shadows need breathing room, especially the stencil and
+   Bungee variants. This prevents glyph edges from being visually chopped. */
+.wall-tag--wall.wall-tag--stencil .wall-tag__paint,
+.wall-tag--wall.wall-tag--bubble .wall-tag__paint,
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__paint {
+  padding-top: 15px !important;
+  padding-bottom: 16px !important;
+}
+
+/* Focus mode is for reading, so it can be larger than the wall while still
+   obeying the existing auto-fit routine. */
+.wall-tag--focus .wall-tag__message {
+  line-height: 1.16 !important;
+  padding: .12em .08em .18em;
+}
+
+.wall-tag--focus.wall-tag--stencil .wall-tag__message {
+  line-height: 1.22 !important;
+}
+
+@media (max-width: 700px) {
+  .wall-tag--wall .wall-tag__signature {
+    font-size: 8px !important;
+  }
+
+  .wall-tag--focus .wall-tag__message {
+    font-size: calc(52px * var(--tag-text-scale)) !important;
+  }
+}
+
+/* =========================================================
+   READABLE DENSE WALL + COMPACT RANGER DEDICATION 2601
+   Slightly larger public-wall type while keeping high post density.
+   The main dedication is intentionally compact and top-centered.
+   ========================================================= */
+
+.wall-tag--wall.wall-tag--wildstyle .wall-tag__message {
+  font-size: calc(32px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--handstyle .wall-tag__message {
+  font-size: calc(35px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--bubble .wall-tag__message {
+  font-size: calc(29px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--stencil .wall-tag__message {
+  font-size: calc(28px * var(--tag-text-scale)) !important;
+  line-height: 1.22 !important;
+}
+
+.wall-tag--wall.wall-tag--marker .wall-tag__message {
+  font-size: calc(31px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--throwup .wall-tag__message {
+  font-size: calc(30px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall.wall-tag--chalk .wall-tag__message {
+  font-size: calc(21px * var(--tag-text-scale)) !important;
+}
+
+.wall-tag--wall .wall-tag__signature {
+  font-size: 10px !important;
+}
+
+.birthday-dedication {
+  width: 600px !important;
+  min-height: 0 !important;
+  padding: 18px 24px 20px !important;
+  justify-content: flex-start !important;
+  gap: 0;
+  transform: rotate(-.25deg) !important;
+}
+
+.birthday-dedication::before {
+  inset: 0 !important;
+}
+
+.birthday-dedication h1 {
+  max-width: 540px !important;
+  margin: 0 !important;
+  font-size: 31px !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.015em;
+}
+
+.birthday-dedication p {
+  max-width: 510px !important;
+  margin: 10px 0 0 !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+.birthday-dedication .resort-discord-link {
+  min-width: 230px !important;
+  height: 48px !important;
+  margin-top: 14px !important;
+}
+
+.birthday-dedication .resort-discord-link__mark {
+  width: 31px !important;
+  height: 31px !important;
+  font-size: 16px !important;
+}
+
+.birthday-dedication .resort-discord-link__copy strong {
+  font-size: 12px !important;
+}
+
+@media (max-width: 700px) {
+  .birthday-dedication {
+    width: 560px !important;
+    padding: 16px 20px 18px !important;
+  }
+
+  .birthday-dedication h1 {
+    font-size: 28px !important;
+  }
+
+  .birthday-dedication p {
+    font-size: 13px !important;
+  }
+
+  .wall-tag--wall .wall-tag__signature {
+    font-size: 9px !important;
+  }
+}

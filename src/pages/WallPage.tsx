@@ -26,12 +26,12 @@ type WallBoxPosition = {
 };
 
 const DRAG_LAYOUT_STORAGE_KEY = "birthdayranger-drag-layout-v2";
-const WALL_BOX_STORAGE_KEY = "birthdayranger-wall-boxes-v1";
+const WALL_BOX_STORAGE_KEY = "birthdayranger-wall-boxes-v2";
 const WALL_MARGIN = 0;
 
 const DEFAULT_WALL_BOX_POSITIONS: Record<"plaque" | "dedication", WallBoxPosition> = {
   plaque: { x: 22, y: 28 },
-  dedication: { x: 580, y: 28 },
+  dedication: { x: 660, y: 24 },
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -230,8 +230,8 @@ export default function WallPage() {
   }
 
   function moveWallBox(box: "plaque" | "dedication", next: WallBoxPosition) {
-    const widths = { plaque: 390, dedication: 760 } as const;
-    const heights = { plaque: 190, dedication: 350 } as const;
+    const widths = { plaque: 390, dedication: 600 } as const;
+    const heights = { plaque: 190, dedication: 250 } as const;
 
     setWallBoxes((current) => ({
       ...current,
@@ -334,9 +334,7 @@ export default function WallPage() {
               onMove={(next) => moveWallBox("dedication", next)}
               title="Drag to move Ranger's birthday dedication"
             >
-              <span className="birthday-dedication__small">FOR RANGER</span>
-
-              <h1>Have a very, very happy birthday.</h1>
+              <h1>FOR RANGER, HAVE A VERY VERY HAPPY FUCKING BIRTHDAY.</h1>
 
               <p>
                 You&apos;re loved more than you know by everyone here.
