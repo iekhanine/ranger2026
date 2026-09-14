@@ -5,7 +5,8 @@ import FloatingComposer from "../components/FloatingComposer";
 import HiddenAdminPanel from "../components/HiddenAdminPanel";
 import TagCard from "../components/TagCard";
 import { exportWallPdf, exportWallVideo } from "../lib/exportWall";
-import { getTags } from "../lib/tags";
+import { getTags, saveTagPlacement } from "../lib/tags";
+import { supabase } from "../lib/supabase";
 import type { TagRecord } from "../lib/types";
 import {
   buildWallLayout,
@@ -25,7 +26,6 @@ type WallBoxPosition = {
   y: number;
 };
 
-const DRAG_LAYOUT_STORAGE_KEY = "birthdayranger-drag-layout-v2";
 const WALL_BOX_STORAGE_KEY = "birthdayranger-wall-boxes-v2";
 const WALL_MARGIN = 0;
 
@@ -46,7 +46,7 @@ export default function WallPage() {
   const [fitScale, setFitScale] = useState(1);
   const [viewportHeight, setViewportHeight] = useState(1080);
   const [exporting, setExporting] = useState<"pdf" | "video" | null>(null);
-  const [manualPlacements, setManualPlacements] = useState<Record<string, ManualPlacement>>({});
+  const [dragPlacements, setDragPlacements] = useState<Record<string, ManualPlacement>>({});
   const [wallBoxes, setWallBoxes] = useState<Record<"plaque" | "dedication", WallBoxPosition>>(DEFAULT_WALL_BOX_POSITIONS);
   const exportSurfaceRef = useRef<HTMLDivElement>(null);
 
@@ -61,34 +61,37 @@ export default function WallPage() {
 
     tags.forEach((tag) => {
       const base = basePlacements.get(tag.id);
-      const manual = manualPlacements[tag.id];
+      if (!base) return;
 
-      if (base && manual) {
+      const savedX = typeof tag.layout_x === "number" ? tag.layout_x : null;
+      const savedY = typeof tag.layout_y === "number" ? tag.layout_y : null;
+      const savedZ = typeof tag.layout_z === "number" ? tag.layout_z : base.zIndex;
+
+      if (savedX !== null && savedY !== null) {
         merged.set(tag.id, {
           ...base,
-          x: manual.x,
-          y: manual.y,
-          zIndex: manual.zIndex,
+          x: savedX,
+          y: savedY,
+          zIndex: savedZ,
+        });
+      }
+
+      const dragging = dragPlacements[tag.id];
+      if (dragging) {
+        const current = merged.get(tag.id) ?? base;
+        merged.set(tag.id, {
+          ...current,
+          x: dragging.x,
+          y: dragging.y,
+          zIndex: dragging.zIndex,
         });
       }
     });
 
     return merged;
-  }, [basePlacements, manualPlacements, tags]);
+  }, [basePlacements, dragPlacements, tags]);
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(DRAG_LAYOUT_STORAGE_KEY);
-      if (!raw) return;
 
-      const parsed = JSON.parse(raw) as Record<string, ManualPlacement>;
-      if (parsed && typeof parsed === "object") {
-        setManualPlacements(parsed);
-      }
-    } catch {
-      // Ignore corrupted local drag layout data.
-    }
-  }, []);
 
   useEffect(() => {
     try {
@@ -106,36 +109,6 @@ export default function WallPage() {
       // Ignore corrupted local wall-box data.
     }
   }, []);
-
-  useEffect(() => {
-    const validIds = new Set(tags.map((tag) => tag.id));
-
-    setManualPlacements((current) => {
-      let changed = false;
-      const next: Record<string, ManualPlacement> = {};
-
-      Object.entries(current).forEach(([tagId, placement]) => {
-        if (validIds.has(tagId)) {
-          next[tagId] = placement;
-        } else {
-          changed = true;
-        }
-      });
-
-      return changed ? next : current;
-    });
-  }, [tags]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        DRAG_LAYOUT_STORAGE_KEY,
-        JSON.stringify(manualPlacements),
-      );
-    } catch {
-      // Ignore storage quota/private-mode failures.
-    }
-  }, [manualPlacements]);
 
   useEffect(() => {
     try {
@@ -193,6 +166,25 @@ export default function WallPage() {
   }, []);
 
   useEffect(() => {
+    const channel = supabase
+      .channel("ranger2026-wall-shared-layout")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ranger2026_tags" },
+        () => {
+          getTags()
+            .then((data) => setTags(data))
+            .catch(() => undefined);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!focusedTag) return;
 
     function closeOnEscape(event: KeyboardEvent) {
@@ -219,7 +211,7 @@ export default function WallPage() {
       WALL_HEIGHT - placement.height - WALL_MARGIN,
     );
 
-    setManualPlacements((current) => ({
+    setDragPlacements((current) => ({
       ...current,
       [tagId]: {
         x,
@@ -227,6 +219,70 @@ export default function WallPage() {
         zIndex: current[tagId]?.zIndex ?? placement.zIndex,
       },
     }));
+  }
+
+  async function finishMoveTag(tagId: string, next: { x: number; y: number }) {
+    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
+    if (!placement) return;
+
+    const x = clamp(
+      next.x,
+      WALL_MARGIN,
+      WALL_WIDTH - placement.width - WALL_MARGIN,
+    );
+
+    const y = clamp(
+      next.y,
+      WALL_MARGIN,
+      WALL_HEIGHT - placement.height - WALL_MARGIN,
+    );
+
+    const highestZ = tags.reduce((maxValue, tag) => {
+      const currentPlacement = placements.get(tag.id) ?? basePlacements.get(tag.id);
+      return Math.max(maxValue, currentPlacement?.zIndex ?? 0);
+    }, 0);
+
+    const zIndex = highestZ + 1;
+
+    setDragPlacements((current) => ({
+      ...current,
+      [tagId]: { x, y, zIndex },
+    }));
+
+    try {
+      const saved = await saveTagPlacement({ id: tagId, x, y, zIndex });
+
+      setTags((current) =>
+        current.map((tag) =>
+          tag.id === tagId
+            ? {
+                ...tag,
+                layout_x: saved.layout_x,
+                layout_y: saved.layout_y,
+                layout_z: saved.layout_z,
+              }
+            : tag,
+        ),
+      );
+
+      setDragPlacements((current) => {
+        const nextPlacements = { ...current };
+        delete nextPlacements[tagId];
+        return nextPlacements;
+      });
+    } catch (saveError) {
+      setDragPlacements((current) => {
+        const nextPlacements = { ...current };
+        delete nextPlacements[tagId];
+        return nextPlacements;
+      });
+
+      window.alert(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not save this tag position.",
+      );
+    }
   }
 
   function moveWallBox(box: "plaque" | "dedication", next: WallBoxPosition) {
@@ -240,29 +296,6 @@ export default function WallPage() {
         y: clamp(next.y, 0, WALL_HEIGHT - heights[box]),
       },
     }));
-  }
-
-  function bringTagToFront(tagId: string) {
-    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
-    if (!placement) return;
-
-    setManualPlacements((current) => {
-      const highestZ = tags.reduce((maxValue, tag) => {
-        const manual = current[tag.id];
-        const base = basePlacements.get(tag.id);
-        const zIndex = manual?.zIndex ?? base?.zIndex ?? 0;
-        return Math.max(maxValue, zIndex);
-      }, 0);
-
-      return {
-        ...current,
-        [tagId]: {
-          x: current[tagId]?.x ?? placement.x,
-          y: current[tagId]?.y ?? placement.y,
-          zIndex: highestZ + 1,
-        },
-      };
-    });
   }
 
   async function runExport(kind: "pdf" | "video") {
@@ -379,10 +412,10 @@ export default function WallPage() {
                     index={index}
                     placement={placement}
                     densityScale={densityScale}
+                    dragScale={displayScale}
                     onOpen={setFocusedTag}
                     onMove={moveTag}
-                    onMoveEnd={moveTag}
-                    onBringToFront={bringTagToFront}
+                    onMoveEnd={(tagId, next) => void finishMoveTag(tagId, next)}
                   />
                 );
               })}

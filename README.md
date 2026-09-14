@@ -169,3 +169,31 @@ control, but it should not be treated as high-security authentication.
 - A runtime fit pass measures each rendered post and continues shrinking text until it fits its tag box.
 - Focused/enlarged posts are constrained to the current viewport and auto-fit instead of forcing giant 72px text.
 - On screens 700px wide or smaller, Leave Your Mark starts collapsed and the composer/focus/admin/export controls use mobile-sized layouts.
+
+## Mobile photo/post repair
+
+If guests see `Photo upload failed` or `Post save failed`, run:
+
+```text
+sql/003_public_posting_and_media.sql
+```
+
+This migration repairs the anonymous insert/read policies for the birthday tag
+table and grants anonymous image uploads only to the `ranger2026-media` bucket.
+The client also compresses large phone-camera JPEGs before upload and now shows
+the real Supabase error instead of the generic `Could not tag the wall.` text.
+
+## Shared drag positions
+
+Tag positions are now stored in Supabase when a drag is **released**, so every
+visitor sees the same arrangement. Run this migration once before relying on
+shared dragging:
+
+```text
+sql/004_shared_tag_positions.sql
+```
+
+It adds `layout_x`, `layout_y`, and `layout_z` to `ranger2026_tags`, creates a
+restricted placement RPC, and enables Realtime for the table. The app no longer
+reads per-browser `localStorage` positions for posts. If Realtime is temporarily
+unavailable, the existing refresh poll still picks up saved positions.

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { TagRecord } from "./types";
+import { getErrorMessage } from "./errors";
 
 export type RangerAdminCredentials = {
   username: string;
@@ -22,6 +23,16 @@ function isMissingRpcError(error: unknown) {
     message.includes("function public.ranger2026_") ||
     message.includes("schema cache") ||
     message.includes("404")
+  );
+}
+
+function isMissingLayoutSchemaError(error: unknown) {
+  const message = getErrorMessage(error, "").toLowerCase();
+  return (
+    message.includes("layout_x") ||
+    message.includes("layout_y") ||
+    message.includes("layout_z") ||
+    message.includes("schema cache")
   );
 }
 
@@ -93,14 +104,72 @@ export async function deleteTagWithCredentials(
   }
 }
 
+export async function saveTagPlacement(input: {
+  id: string;
+  x: number;
+  y: number;
+  zIndex: number;
+}): Promise<{ layout_x: number; layout_y: number; layout_z: number }> {
+  const { data, error } = await supabase.rpc("ranger2026_move_tag", {
+    p_id: input.id,
+    p_x: input.x,
+    p_y: input.y,
+    p_z: input.zIndex,
+  });
+
+  if (error) {
+    throw new Error(
+      getErrorMessage(
+        error,
+        "Could not save this tag position. Run sql/004_shared_tag_positions.sql in Supabase.",
+      ),
+    );
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row) {
+    throw new Error("Could not save this tag position.");
+  }
+
+  return {
+    layout_x: Number(row.layout_x),
+    layout_y: Number(row.layout_y),
+    layout_z: Number(row.layout_z),
+  };
+}
+
 export async function getTags(): Promise<TagRecord[]> {
-  const { data, error } = await supabase
+  const withLayout = await supabase
+    .from("ranger2026_tags")
+    .select("id, name, message, media_url, created_at, layout_x, layout_y, layout_z")
+    .order("created_at", { ascending: true });
+
+  if (!withLayout.error) {
+    return (withLayout.data ?? []) as TagRecord[];
+  }
+
+  // Let the app continue to work while the shared-layout migration is being
+  // deployed. Drag saving will still clearly ask for migration 004.
+  if (!isMissingLayoutSchemaError(withLayout.error)) {
+    throw new Error(getErrorMessage(withLayout.error, "Could not load the wall."));
+  }
+
+  const legacy = await supabase
     .from("ranger2026_tags")
     .select("id, name, message, media_url, created_at")
     .order("created_at", { ascending: true });
 
-  if (error) throw error;
-  return (data ?? []) as TagRecord[];
+  if (legacy.error) {
+    throw new Error(getErrorMessage(legacy.error, "Could not load the wall."));
+  }
+
+  return (legacy.data ?? []).map((tag) => ({
+    ...tag,
+    layout_x: null,
+    layout_y: null,
+    layout_z: null,
+  })) as TagRecord[];
 }
 
 export async function createTag(input: {
@@ -118,8 +187,13 @@ export async function createTag(input: {
     .select("id, name, message, media_url, created_at")
     .single();
 
-  if (error) throw error;
-  return data as TagRecord;
+  if (error) throw new Error(getErrorMessage(error, "Could not save the birthday post."));
+  return {
+    ...(data as Omit<TagRecord, "layout_x" | "layout_y" | "layout_z">),
+    layout_x: null,
+    layout_y: null,
+    layout_z: null,
+  };
 }
 
 export async function deleteTag(id: string): Promise<void> {
@@ -128,7 +202,7 @@ export async function deleteTag(id: string): Promise<void> {
     .delete()
     .eq("id", id);
 
-  if (error) throw error;
+  if (error) throw new Error(getErrorMessage(error, "Could not delete that post."));
 }
 
 export async function uploadMedia(file: File): Promise<string> {
@@ -143,7 +217,7 @@ export async function uploadMedia(file: File): Promise<string> {
       contentType: file.type,
     });
 
-  if (error) throw error;
+  if (error) throw new Error(getErrorMessage(error, "Could not upload the photo."));
 
   const { data } = supabase.storage
     .from("ranger2026-media")

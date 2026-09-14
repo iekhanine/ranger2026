@@ -1,6 +1,8 @@
 import { ImagePlus, Send, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { createTag, uploadMedia } from "../lib/tags";
+import { getErrorMessage } from "../lib/errors";
+import { prepareMediaForUpload } from "../lib/media";
 import type { TagRecord } from "../lib/types";
 
 type Props = {
@@ -64,13 +66,32 @@ export default function TagComposer({ onCreated }: Props) {
     try {
       setSaving(true);
 
-      const mediaUrl = file ? await uploadMedia(file) : null;
+      let mediaUrl: string | null = null;
 
-      const created = await createTag({
-        name,
-        message,
-        mediaUrl,
-      });
+      if (file) {
+        try {
+          const preparedFile = await prepareMediaForUpload(file);
+          mediaUrl = await uploadMedia(preparedFile);
+        } catch (uploadError) {
+          throw new Error(
+            `Photo upload failed: ${getErrorMessage(uploadError, "Supabase rejected the image.")}`,
+          );
+        }
+      }
+
+      let created: TagRecord;
+
+      try {
+        created = await createTag({
+          name,
+          message,
+          mediaUrl,
+        });
+      } catch (postError) {
+        throw new Error(
+          `Post save failed: ${getErrorMessage(postError, "Supabase rejected the post.")}`,
+        );
+      }
 
       onCreated(created);
 
@@ -83,11 +104,7 @@ export default function TagComposer({ onCreated }: Props) {
       setFile(null);
       setPreview(null);
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Could not tag the wall.",
-      );
+      setError(getErrorMessage(submitError, "Could not tag the wall."));
     } finally {
       setSaving(false);
     }

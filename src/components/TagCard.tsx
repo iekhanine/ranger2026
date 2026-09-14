@@ -12,6 +12,7 @@ type Props = {
   index: number;
   placement?: TagPlacement;
   densityScale?: number;
+  dragScale?: number;
   mode?: "wall" | "focus";
   onOpen?: (tag: TagRecord) => void;
   onMove?: (tagId: string, next: { x: number; y: number }) => void;
@@ -73,6 +74,7 @@ export default function TagCard({
   index,
   placement,
   densityScale = 1,
+  dragScale = 1,
   mode = "wall",
   onOpen,
   onMove,
@@ -139,10 +141,13 @@ export default function TagCard({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
+    const safeDragScale = dragScale > 0 ? dragScale : 1;
+    const screenDx = event.clientX - drag.startX;
+    const screenDy = event.clientY - drag.startY;
+    const dx = screenDx / safeDragScale;
+    const dy = screenDy / safeDragScale;
 
-    if (!drag.moved && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+    if (!drag.moved && Math.hypot(screenDx, screenDy) >= DRAG_THRESHOLD) {
       drag.moved = true;
       suppressOpenRef.current = true;
     }
@@ -157,8 +162,9 @@ export default function TagCard({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
+    const safeDragScale = dragScale > 0 ? dragScale : 1;
+    const dx = (event.clientX - drag.startX) / safeDragScale;
+    const dy = (event.clientY - drag.startY) / safeDragScale;
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
