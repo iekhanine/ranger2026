@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="4" seed="8" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 .14"/>
+      </feComponentTransfer>
+    </filter>
+    <pattern id="brick" width="170" height="74" patternUnits="userSpaceOnUse">
+      <rect width="170" height="74" fill="#242426"/>
+      <path d="M0 0H170 M0 74H170 M0 37H170" stroke="#111113" stroke-width="5"/>
+      <path d="M0 0V37 M85 0V37 M170 0V37 M42.5 37V74 M127.5 37V74" stroke="#111113" stroke-width="5"/>
+      <path d="M0 3H170 M3 0V37 M88 0V37 M45.5 37V74 M130.5 37V74" stroke="#38383b" stroke-width="1.5" opacity=".6"/>
+    </pattern>
+    <radialGradient id="vignette" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".035"/>
+      <stop offset="70%" stop-color="#000000" stop-opacity=".05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity=".58"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#brick)"/>
+  <rect width="1600" height="1000" filter="url(#noise)" opacity=".85"/>
+  <rect width="1600" height="1000" fill="url(#vignette)"/>
+
+  <g opacity=".18" fill="none" stroke-linecap="round">
+    <path d="M45 160 C210 50 360 265 510 155 S790 110 920 205" stroke="#ff4c1f" stroke-width="16"/>
+    <path d="M1080 120 C1240 28 1420 94 1545 225" stroke="#2bc7ff" stroke-width="10"/>
+    <path d="M80 840 C290 742 420 866 630 804" stroke="#f7e143" stroke-width="12"/>
+  </g>
+
+  <g opacity=".1" fill="#fff">
+    <circle cx="123" cy="405" r="6"/><circle cx="132" cy="422" r="3"/><circle cx="148" cy="398" r="2"/>
+    <circle cx="1472" cy="650" r="5"/><circle cx="1492" cy="675" r="3"/><circle cx="1450" cy="689" r="2"/>
+  </g>
+</svg>
