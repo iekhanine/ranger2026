@@ -345,18 +345,18 @@ export default function WallPage() {
               position={wallBoxes.plaque}
               scale={displayScale}
               onMove={(next) => moveWallBox("plaque", next)}
-              title="Drag to move the Penny2026 plaque"
+              title="Drag to move the Penny birthday plaque"
             >
               <div className="birthday-corner-tag__eyebrow">
                 <Sparkles size={13} />
-                PENNY2026
+                PENNY
               </div>
 
               <strong>HAPPY BIRTHDAY.</strong>
 
               <p>
                 This wall belongs to Penny&apos;s people. Leave a birthday tag,
-                roast her, post a photo, or just make your mark.
+                roast Penny, post a photo, or just make your mark.
               </p>
             </DraggableWallBox>
 
@@ -422,7 +422,7 @@ export default function WallPage() {
             </section>
 
             <footer className="wall-footer">
-              <span>made for Penny by his friends</span>
+              <span>made for Penny by friends</span>
               <span>•</span>
               <span>ranger.unfilteredlog.com</span>
             </footer>
