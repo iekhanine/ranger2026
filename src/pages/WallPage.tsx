@@ -1,87 +1,496 @@
-import { useState } from "react";
-import { Heart, Sparkles, Gift, ArrowUpRight } from "lucide-react";
-import "./PennyBirthday.css";
+import { FileDown, Film, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import DraggableWallBox from "../components/DraggableWallBox";
+import FloatingComposer from "../components/FloatingComposer";
+import HiddenAdminPanel from "../components/HiddenAdminPanel";
+import TagCard from "../components/TagCard";
+import { exportWallPdf, exportWallVideo } from "../lib/exportWall";
+import { getTags, saveTagPlacement } from "../lib/tags";
+import { supabase } from "../lib/supabase";
+import type { TagRecord } from "../lib/types";
+import {
+  buildWallLayout,
+  getDensityScale,
+  WALL_HEIGHT,
+  WALL_WIDTH,
+} from "../lib/wallLayout";
 
-const stars = Array.from({ length: 24 }, (_, i) => ({
-  left: `${(i * 41 + 17) % 96 + 2}%`,
-  top: `${(i * 29 + 11) % 88 + 6}%`,
-  delay: `${(i % 9) * 0.38}s`,
-  duration: `${3 + (i % 5) * 0.65}s`,
-}));
+type ManualPlacement = {
+  x: number;
+  y: number;
+  zIndex: number;
+};
+
+type WallBoxPosition = {
+  x: number;
+  y: number;
+};
+
+const WALL_BOX_STORAGE_KEY = "birthdayranger-wall-boxes-v2";
+const WALL_MARGIN = 0;
+
+const DEFAULT_WALL_BOX_POSITIONS: Record<"plaque" | "dedication", WallBoxPosition> = {
+  plaque: { x: 22, y: 28 },
+  dedication: { x: 660, y: 24 },
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
 
 export default function WallPage() {
-  const [opened, setOpened] = useState(false);
-  const [celebrating, setCelebrating] = useState(false);
+  const [tags, setTags] = useState<TagRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [focusedTag, setFocusedTag] = useState<TagRecord | null>(null);
+  const [fitScale, setFitScale] = useState(1);
+  const [viewportHeight, setViewportHeight] = useState(1080);
+  const [exporting, setExporting] = useState<"pdf" | "video" | null>(null);
+  const [dragPlacements, setDragPlacements] = useState<Record<string, ManualPlacement>>({});
+  const [wallBoxes, setWallBoxes] = useState<Record<"plaque" | "dedication", WallBoxPosition>>(DEFAULT_WALL_BOX_POSITIONS);
+  const exportSurfaceRef = useRef<HTMLDivElement>(null);
 
-  function openCard() {
-    setOpened((value) => !value);
-    setCelebrating(true);
-    window.setTimeout(() => setCelebrating(false), 1700);
+  const densityScale = getDensityScale(tags.length);
+  const displayScale = fitScale;
+  const scaledCanvasHeight = WALL_HEIGHT * displayScale;
+
+  const basePlacements = useMemo(() => buildWallLayout(tags), [tags]);
+
+  const placements = useMemo(() => {
+    const merged = new Map(basePlacements);
+
+    tags.forEach((tag) => {
+      const base = basePlacements.get(tag.id);
+      if (!base) return;
+
+      const savedX = typeof tag.layout_x === "number" ? tag.layout_x : null;
+      const savedY = typeof tag.layout_y === "number" ? tag.layout_y : null;
+      const savedZ = typeof tag.layout_z === "number" ? tag.layout_z : base.zIndex;
+
+      if (savedX !== null && savedY !== null) {
+        merged.set(tag.id, {
+          ...base,
+          x: savedX,
+          y: savedY,
+          zIndex: savedZ,
+        });
+      }
+
+      const dragging = dragPlacements[tag.id];
+      if (dragging) {
+        const current = merged.get(tag.id) ?? base;
+        merged.set(tag.id, {
+          ...current,
+          x: dragging.x,
+          y: dragging.y,
+          zIndex: dragging.zIndex,
+        });
+      }
+    });
+
+    return merged;
+  }, [basePlacements, dragPlacements, tags]);
+
+
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WALL_BOX_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as Partial<Record<"plaque" | "dedication", WallBoxPosition>>;
+      if (parsed && typeof parsed === "object") {
+        setWallBoxes({
+          plaque: parsed.plaque ?? DEFAULT_WALL_BOX_POSITIONS.plaque,
+          dedication: parsed.dedication ?? DEFAULT_WALL_BOX_POSITIONS.dedication,
+        });
+      }
+    } catch {
+      // Ignore corrupted local wall-box data.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WALL_BOX_STORAGE_KEY, JSON.stringify(wallBoxes));
+    } catch {
+      // Ignore storage quota/private-mode failures.
+    }
+  }, [wallBoxes]);
+
+  useEffect(() => {
+    function calculateFit() {
+      const widthScale = window.innerWidth / WALL_WIDTH;
+      const heightScale = window.innerHeight / WALL_HEIGHT;
+      const viewportRatio = window.innerWidth / Math.max(window.innerHeight, 1);
+      const wallRatio = WALL_WIDTH / WALL_HEIGHT;
+
+      setFitScale(viewportRatio > wallRatio ? widthScale : Math.min(widthScale, heightScale));
+      setViewportHeight(window.innerHeight);
+    }
+
+    calculateFit();
+    window.addEventListener("resize", calculateFit);
+    return () => window.removeEventListener("resize", calculateFit);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getTags()
+      .then((data) => {
+        if (mounted) setTags(data);
+      })
+      .catch((loadError) => {
+        if (!mounted) return;
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load the wall.",
+        );
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    const timer = window.setInterval(() => {
+      getTags()
+        .then((data) => setTags(data))
+        .catch(() => undefined);
+    }, 15000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("ranger2026-wall-shared-layout")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ranger2026_tags" },
+        () => {
+          getTags()
+            .then((data) => setTags(data))
+            .catch(() => undefined);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!focusedTag) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setFocusedTag(null);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [focusedTag]);
+
+  function moveTag(tagId: string, next: { x: number; y: number }) {
+    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
+    if (!placement) return;
+
+    const x = clamp(
+      next.x,
+      WALL_MARGIN,
+      WALL_WIDTH - placement.width - WALL_MARGIN,
+    );
+
+    const y = clamp(
+      next.y,
+      WALL_MARGIN,
+      WALL_HEIGHT - placement.height - WALL_MARGIN,
+    );
+
+    setDragPlacements((current) => ({
+      ...current,
+      [tagId]: {
+        x,
+        y,
+        zIndex: current[tagId]?.zIndex ?? placement.zIndex,
+      },
+    }));
+  }
+
+  async function finishMoveTag(tagId: string, next: { x: number; y: number }) {
+    const placement = placements.get(tagId) ?? basePlacements.get(tagId);
+    if (!placement) return;
+
+    const x = clamp(
+      next.x,
+      WALL_MARGIN,
+      WALL_WIDTH - placement.width - WALL_MARGIN,
+    );
+
+    const y = clamp(
+      next.y,
+      WALL_MARGIN,
+      WALL_HEIGHT - placement.height - WALL_MARGIN,
+    );
+
+    const highestZ = tags.reduce((maxValue, tag) => {
+      const currentPlacement = placements.get(tag.id) ?? basePlacements.get(tag.id);
+      return Math.max(maxValue, currentPlacement?.zIndex ?? 0);
+    }, 0);
+
+    const zIndex = highestZ + 1;
+
+    setDragPlacements((current) => ({
+      ...current,
+      [tagId]: { x, y, zIndex },
+    }));
+
+    try {
+      const saved = await saveTagPlacement({ id: tagId, x, y, zIndex });
+
+      setTags((current) =>
+        current.map((tag) =>
+          tag.id === tagId
+            ? {
+                ...tag,
+                layout_x: saved.layout_x,
+                layout_y: saved.layout_y,
+                layout_z: saved.layout_z,
+              }
+            : tag,
+        ),
+      );
+
+      setDragPlacements((current) => {
+        const nextPlacements = { ...current };
+        delete nextPlacements[tagId];
+        return nextPlacements;
+      });
+    } catch (saveError) {
+      setDragPlacements((current) => {
+        const nextPlacements = { ...current };
+        delete nextPlacements[tagId];
+        return nextPlacements;
+      });
+
+      window.alert(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not save this tag position.",
+      );
+    }
+  }
+
+  function moveWallBox(box: "plaque" | "dedication", next: WallBoxPosition) {
+    const widths = { plaque: 390, dedication: 600 } as const;
+    const heights = { plaque: 190, dedication: 250 } as const;
+
+    setWallBoxes((current) => ({
+      ...current,
+      [box]: {
+        x: clamp(next.x, 0, WALL_WIDTH - widths[box]),
+        y: clamp(next.y, 0, WALL_HEIGHT - heights[box]),
+      },
+    }));
+  }
+
+  async function runExport(kind: "pdf" | "video") {
+    const surface = exportSurfaceRef.current;
+    if (!surface || exporting) return;
+
+    try {
+      setExporting(kind);
+
+      if (kind === "pdf") {
+        await exportWallPdf(surface);
+      } else {
+        await exportWallVideo(
+          surface,
+          tags.map((tag) => ({
+            id: tag.id,
+            createdAt: tag.created_at,
+          })),
+        );
+      }
+    } catch (exportError) {
+      window.alert(
+        exportError instanceof Error
+          ? exportError.message
+          : "Could not export the wall.",
+      );
+    } finally {
+      setExporting(null);
+    }
   }
 
   return (
-    <main className="penny-page">
-      <div className="penny-glow penny-glow--a" aria-hidden="true" />
-      <div className="penny-glow penny-glow--b" aria-hidden="true" />
-      <div className="penny-sky" aria-hidden="true">
-        {stars.map((star, i) => (
-          <span key={i} className="penny-star" style={{
-            left: star.left,
-            top: star.top,
-            animationDelay: star.delay,
-            animationDuration: star.duration,
-          }} />
-        ))}
-      </div>
+    <main className="wall-page">
+      <div
+        className="wall-viewport"
+        style={{ minHeight: `${Math.max(viewportHeight, scaledCanvasHeight)}px` }}
+      >
+        <div
+          className="wall-canvas"
+          style={{
+            transform: `translateX(-50%) scale(${displayScale})`,
+          }}
+        >
+          <div className="wall-export-surface" ref={exportSurfaceRef}>
+            <DraggableWallBox
+              className="birthday-corner-tag"
+              position={wallBoxes.plaque}
+              scale={displayScale}
+              onMove={(next) => moveWallBox("plaque", next)}
+              title="Drag to move the Penny2026 plaque"
+            >
+              <div className="birthday-corner-tag__eyebrow">
+                <Sparkles size={13} />
+                PENNY2026
+              </div>
 
-      <header className="penny-header">
-        <span className="penny-monogram">P<span>✦</span></span>
-        <span className="penny-header-label">A DAY JUST FOR YOU</span>
-      </header>
+              <strong>HAPPY BIRTHDAY.</strong>
 
-      <section className="penny-hero" aria-labelledby="penny-title">
-        <div className="penny-eyebrow"><span className="penny-eyebrow-line" /> THE WORLD IS BETTER WITH YOU IN IT <span className="penny-eyebrow-line" /></div>
-        <div className="penny-decoration" aria-hidden="true"><Sparkles size={29} strokeWidth={1.2}/></div>
-        <p className="penny-small-title">Wishing you the happiest</p>
-        <h1 id="penny-title">Birthday,<br /><em>Penny.</em></h1>
-        <p className="penny-subtitle">Some people make ordinary days feel a little more special.<br className="penny-desktop-break" /> Here's to someone who does exactly that.</p>
+              <p>
+                This wall belongs to Penny&apos;s people. Leave a birthday tag,
+                roast her, post a photo, or just make your mark.
+              </p>
+            </DraggableWallBox>
 
-        <div className="penny-card-area">
-          <button
-            className={`penny-gift ${opened ? "penny-gift--opened" : ""}`}
-            type="button"
-            onClick={openCard}
-            aria-expanded={opened}
-            aria-controls="penny-card-message"
-          >
-            <span className="penny-gift-icon">{opened ? <Heart size={19} fill="currentColor" /> : <Gift size={19} strokeWidth={1.7} />}</span>
-            {opened ? "Close your birthday note" : "Open your birthday note"}
-            <span className="penny-gift-arrow">↗</span>
-          </button>
-          <div id="penny-card-message" className={`penny-note ${opened ? "penny-note--visible" : ""}`} aria-hidden={!opened}>
-            <div className="penny-note-top">A LITTLE SOMETHING FOR PENNY <Heart size={14} /></div>
-            <p>May this year bring you more laughter, good surprises, unforgettable moments, and all the little things that make life beautiful.</p>
-            <strong>You deserve a wonderful birthday. ♡</strong>
+            <DraggableWallBox
+              className="birthday-dedication"
+              position={wallBoxes.dedication}
+              scale={displayScale}
+              onMove={(next) => moveWallBox("dedication", next)}
+              title="Drag to move Penny's birthday dedication"
+            >
+              <h1>FOR PENNY, HAVE A VERY VERY HAPPY FUCKING BIRTHDAY.</h1>
+
+              <p>
+                You&apos;re loved more than you know by everyone here.
+              </p>
+
+              <a
+                className="resort-discord-link"
+                href="https://discord.gg/qr6FTrWsGA"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="resort-discord-link__mark">R</span>
+
+                <span className="resort-discord-link__copy">
+                  <small>COME HOME TO</small>
+                  <strong>THE RESORT</strong>
+                </span>
+
+                <span className="resort-discord-link__arrow">↗</span>
+              </a>
+            </DraggableWallBox>
+
+            {loading && <div className="wall-status">Loading the wall...</div>}
+
+            {!loading && error && (
+              <div className="wall-status wall-status--error">{error}</div>
+            )}
+
+            {!loading && !error && tags.length === 0 && (
+              <div className="wall-status">Clean wall. Somebody fix that.</div>
+            )}
+
+            <section className="tag-layer" aria-label="Penny birthday graffiti wall">
+              {tags.map((tag, index) => {
+                const placement = placements.get(tag.id);
+                if (!placement) return null;
+
+                return (
+                  <TagCard
+                    key={tag.id}
+                    tag={tag}
+                    index={index}
+                    placement={placement}
+                    densityScale={densityScale}
+                    dragScale={displayScale}
+                    onOpen={setFocusedTag}
+                    onMove={moveTag}
+                    onMoveEnd={(tagId, next) => void finishMoveTag(tagId, next)}
+                  />
+                );
+              })}
+            </section>
+
+            <footer className="wall-footer">
+              <span>made for Penny by his friends</span>
+              <span>•</span>
+              <span>ranger.unfilteredlog.com</span>
+            </footer>
           </div>
         </div>
-        <div className="penny-divider" aria-hidden="true"><span>✦</span></div>
-        <p className="penny-bottom">MAKE A WISH. MAKE IT A GOOD ONE.</p>
-      </section>
+      </div>
 
-      <footer className="penny-footer">
-        <span>MADE WITH A LITTLE LOVE</span>
-        <Heart size={12} aria-hidden="true" />
-        <span>FOR PENNY</span>
-      </footer>
+      <FloatingComposer
+        onCreated={(tag) => {
+          setTags((current) => [...current, tag]);
+        }}
+      />
 
-      {celebrating && <div className="penny-confetti" aria-hidden="true">{Array.from({length:32},(_,i)=><i key={i} style={{
-        left:`${(i*47+13)%100}%`,
-        animationDelay:`${(i%8)*0.075}s`,
-        backgroundColor:["#eabb83","#e5a8b2","#e9d7ee","#a9c5bd"][i%4],
-      }}/>)}</div>}
-      <a className="penny-discord" href="https://discord.gg/qr6FTrWsGA" target="_blank" rel="noreferrer" aria-label="Visit the Resort Discord">
-        THE RESORT <ArrowUpRight size={13} />
-      </a>
+      <HiddenAdminPanel
+        tags={tags}
+        onDeleted={(id) => {
+          setTags((current) => current.filter((tag) => tag.id !== id));
+          setFocusedTag((current) => (current?.id === id ? null : current));
+        }}
+      />
+
+      <div className="export-toolbar" aria-label="Wall export tools">
+        <button
+          type="button"
+          onClick={() => void runExport("pdf")}
+          disabled={Boolean(exporting)}
+        >
+          <FileDown size={15} />
+          {exporting === "pdf" ? "BUILDING PDF..." : "EXPORT PDF"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void runExport("video")}
+          disabled={Boolean(exporting)}
+        >
+          <Film size={15} />
+          {exporting === "video" ? "RENDERING 72H VIDEO..." : "EXPORT 72H VIDEO"}
+        </button>
+      </div>
+
+      {focusedTag && (
+        <div className="tag-focus" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            className="tag-focus__backdrop"
+            onClick={() => setFocusedTag(null)}
+            aria-label="Close enlarged tag"
+          />
+
+          <div className="tag-focus__content">
+            <button
+              type="button"
+              className="tag-focus__close"
+              onClick={() => setFocusedTag(null)}
+              aria-label="Close enlarged tag"
+            >
+              <X size={18} />
+            </button>
+
+            <TagCard
+              tag={focusedTag}
+              index={tags.findIndex((tag) => tag.id === focusedTag.id)}
+              mode="focus"
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
