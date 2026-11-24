@@ -48,7 +48,7 @@ a { color: inherit; }
   left: 24px;
   width: min(310px, calc(100vw - 48px));
   padding: 12px 14px 13px;
-  border-left: 4px solid #ff5b2e;
+  border-left: 4px solid #ea7cab;
   background: rgba(7, 7, 9, .76);
   box-shadow: 4px 5px 0 rgba(0,0,0,.22);
   backdrop-filter: blur(3px);
@@ -60,7 +60,7 @@ a { color: inherit; }
   align-items: center;
   gap: 6px;
   margin-bottom: 6px;
-  color: #ffcf32;
+  color: #f4c5de;
   font-family: "Stardos Stencil", monospace;
   font-size: 10px;
   font-weight: 900;
@@ -127,7 +127,7 @@ a { color: inherit; }
 .wall-compose .composer__kicker {
   display: block;
   margin-bottom: 4px;
-  color: #ffcf32;
+  color: #f4c5de;
   font-family: "Stardos Stencil", monospace;
   font-size: 8px;
   font-weight: 900;
@@ -223,7 +223,7 @@ a { color: inherit; }
 
 .wall-compose .field input:focus,
 .wall-compose .field textarea:focus {
-  border-color: #ff5b2e;
+  border-color: #ea7cab;
   background: #0d0d10;
   box-shadow: 0 0 0 3px rgba(255,91,46,.09);
 }
@@ -335,8 +335,8 @@ a { color: inherit; }
   min-width: 126px;
   border: 1px solid #151515;
   color: #111;
-  background: #ffcf32;
-  box-shadow: 3px 3px 0 #ff5b2e;
+  background: #f4c5de;
+  box-shadow: 3px 3px 0 #ea7cab;
 }
 
 .wall-compose .button--primary:hover:not(:disabled) {
@@ -471,11 +471,11 @@ a { color: inherit; }
   font-family: "Sedgwick Ave Display", "Permanent Marker", cursive;
   font-size: clamp(29px, 3vw, 49px);
   line-height: .96;
-  color: #ffcf32;
+  color: #f4c5de;
   -webkit-text-stroke: 1.5px #111;
   text-shadow:
     3px 3px 0 #111,
-    5px 5px 0 #ff4c1f;
+    5px 5px 0 #c45392;
 }
 
 .wall-tag--wildstyle .wall-tag__signature {
@@ -494,23 +494,23 @@ a { color: inherit; }
 .wall-tag--handstyle .wall-tag__signature {
   font-family: "Reenie Beanie", cursive;
   font-size: 19px;
-  color: #ff5b2e;
+  color: #ea7cab;
 }
 
 .wall-tag--bubble .wall-tag__message {
   font-family: "Bungee Shade", Impact, sans-serif;
   font-size: clamp(23px, 2.5vw, 39px);
   line-height: 1;
-  color: #74dcff;
+  color: #94dcd7;
   -webkit-text-stroke: 1px #111;
   text-shadow:
     3px 3px 0 #111,
-    5px 5px 0 #ff4c1f;
+    5px 5px 0 #c45392;
 }
 
 .wall-tag--bubble .wall-tag__signature {
   font-family: "Permanent Marker", cursive;
-  color: #ffcf32;
+  color: #f4c5de;
 }
 
 .wall-tag--stencil .wall-tag__message {
@@ -525,14 +525,14 @@ a { color: inherit; }
 
 .wall-tag--stencil .wall-tag__signature {
   font-family: "Special Elite", monospace;
-  color: #ff5b2e;
+  color: #ea7cab;
 }
 
 .wall-tag--marker .wall-tag__message {
   font-family: "Permanent Marker", cursive;
   font-size: clamp(25px, 2.8vw, 43px);
   line-height: 1.04;
-  color: #ff5b2e;
+  color: #ea7cab;
   text-shadow: 2px 2px 0 #121214;
 }
 
@@ -546,7 +546,7 @@ a { color: inherit; }
   font-family: "Rubik Spray Paint", Impact, sans-serif;
   font-size: clamp(24px, 2.9vw, 44px);
   line-height: .97;
-  color: #ff7bc9;
+  color: #eda2d3;
   -webkit-text-stroke: 1px #111;
   text-shadow:
     4px 4px 0 #111,
@@ -556,7 +556,7 @@ a { color: inherit; }
 .wall-tag--throwup .wall-tag__signature {
   font-family: "Sedgwick Ave Display", cursive;
   font-size: 16px;
-  color: #5ce2ff;
+  color: #a5e8da;
 }
 
 .wall-tag--chalk .wall-tag__message {
@@ -591,7 +591,7 @@ a { color: inherit; }
 
 .wall-status--error {
   border-color: rgba(255,91,46,.45);
-  color: #ffab91;
+  color: #edb4ca;
 }
 
 .wall-footer {
@@ -683,7 +683,7 @@ a { color: inherit; }
   margin-bottom: 20px;
 }
 
-.admin-toolbar span { color: #ff5b2e; font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.admin-toolbar span { color: #ea7cab; font-size: 9px; font-weight: 900; letter-spacing: .12em; }
 .admin-toolbar h1 { margin: 3px 0 0; font-size: 24px; }
 .admin-secondary { margin: 0; }
 
@@ -721,7 +721,7 @@ a { color: inherit; }
   padding: 0;
   border: 1px solid #55302d;
   border-radius: 5px;
-  color: #ff7a5d;
+  color: #f2a0c0;
   background: #1d1515;
   cursor: pointer;
 }
@@ -889,7 +889,7 @@ body,
   left: 38px;
   width: 350px;
   padding: 15px 17px 16px;
-  border-left: 6px solid #ff5b2e;
+  border-left: 6px solid #ea7cab;
   background: rgba(7, 7, 9, .74);
   box-shadow: 6px 7px 0 rgba(0,0,0,.24);
   backdrop-filter: blur(3px);
@@ -899,7 +899,7 @@ body,
 .wall-export-surface .birthday-corner-tag__eyebrow {
   gap: 8px;
   margin-bottom: 7px;
-  color: #ffcf32;
+  color: #f4c5de;
   font-size: 12px;
 }
 
@@ -1099,7 +1099,7 @@ body,
   border: 1px solid rgba(255,255,255,.13);
   border-bottom: 0;
   border-radius: 7px 7px 0 0;
-  color: #ffcf32;
+  color: #f4c5de;
   background: rgba(8,8,10,.96);
   box-shadow: 0 8px 20px rgba(0,0,0,.20);
   cursor: grab;
@@ -1191,7 +1191,7 @@ body,
 
 .export-toolbar button:hover:not(:disabled) {
   border-color: rgba(255,207,50,.55);
-  color: #ffcf32;
+  color: #f4c5de;
 }
 
 .export-toolbar button:disabled {
@@ -1264,12 +1264,12 @@ body,
   font-weight: 400;
   line-height: .94;
   letter-spacing: .01em;
-  color: #ffcf32;
+  color: #f4c5de;
   -webkit-text-stroke: 1.5px #101014;
   paint-order: stroke fill;
   text-shadow:
     3px 3px 0 #101014,
-    5px 5px 0 #ff4c1f,
+    5px 5px 0 #c45392,
     -1px -1px 0 rgba(255,255,255,.14);
 }
 
@@ -1295,7 +1295,7 @@ body,
 .wall-tag--wall.wall-tag--handstyle .wall-tag__signature,
 .wall-tag--focus.wall-tag--handstyle .wall-tag__signature {
   font-family: "Reenie Beanie", cursive;
-  color: #ff5b2e;
+  color: #ea7cab;
 }
 
 /* BUBBLE / THROW-UP */
@@ -1304,18 +1304,18 @@ body,
   font-family: "Bungee Shade", Impact, sans-serif;
   font-weight: 400;
   line-height: 1;
-  color: #74dcff;
+  color: #94dcd7;
   -webkit-text-stroke: 1px #101014;
   paint-order: stroke fill;
   text-shadow:
     3px 3px 0 #101014,
-    6px 6px 0 #ff4c1f;
+    6px 6px 0 #c45392;
 }
 
 .wall-tag--wall.wall-tag--bubble .wall-tag__signature,
 .wall-tag--focus.wall-tag--bubble .wall-tag__signature {
   font-family: "Permanent Marker", cursive;
-  color: #ffcf32;
+  color: #f4c5de;
 }
 
 /* STENCIL */
@@ -1335,7 +1335,7 @@ body,
 .wall-tag--wall.wall-tag--stencil .wall-tag__signature,
 .wall-tag--focus.wall-tag--stencil .wall-tag__signature {
   font-family: "Special Elite", monospace;
-  color: #ff5b2e;
+  color: #ea7cab;
 }
 
 /* MARKER */
@@ -1344,7 +1344,7 @@ body,
   font-family: "Permanent Marker", cursive;
   font-weight: 400;
   line-height: 1.04;
-  color: #ff5b2e;
+  color: #ea7cab;
   text-shadow:
     2px 2px 0 #101014,
     0 0 4px rgba(255,91,46,.16);
@@ -1362,7 +1362,7 @@ body,
   font-family: "Rubik Spray Paint", Impact, sans-serif;
   font-weight: 400;
   line-height: .96;
-  color: #ff7bc9;
+  color: #eda2d3;
   -webkit-text-stroke: 1px #101014;
   paint-order: stroke fill;
   text-shadow:
@@ -1373,7 +1373,7 @@ body,
 .wall-tag--wall.wall-tag--throwup .wall-tag__signature,
 .wall-tag--focus.wall-tag--throwup .wall-tag__signature {
   font-family: "Sedgwick Ave Display", cursive;
-  color: #5ce2ff;
+  color: #a5e8da;
 }
 
 /* CHALK / PAINT PEN */
@@ -1681,7 +1681,7 @@ body,
 
 .floating-composer .field input:focus,
 .floating-composer .field textarea:focus {
-  border-color: #ff5b2e;
+  border-color: #ea7cab;
 
   background: #0d0d10;
 
@@ -1777,7 +1777,7 @@ body,
 }
 
 .floating-composer .preview-remove:hover {
-  border-color: #ff5b2e;
+  border-color: #ea7cab;
 
   color: #ffffff;
 }
@@ -1870,21 +1870,21 @@ body,
 
   color: #111;
 
-  background: #ffcf32;
+  background: #f4c5de;
 
-  box-shadow: 3px 3px 0 #ff5b2e;
+  box-shadow: 3px 3px 0 #ea7cab;
 }
 
 .floating-composer .button--primary:hover:not(:disabled) {
   transform: translate(-1px, -1px);
 
-  box-shadow: 4px 4px 0 #ff5b2e;
+  box-shadow: 4px 4px 0 #ea7cab;
 }
 
 .floating-composer .button--primary:active:not(:disabled) {
   transform: translate(1px, 1px);
 
-  box-shadow: 1px 1px 0 #ff5b2e;
+  box-shadow: 1px 1px 0 #ea7cab;
 }
 
 .floating-composer .button--primary:disabled {
@@ -2033,7 +2033,7 @@ body,
 .birthday-dedication__small {
   margin-bottom: 12px;
 
-  color: #ffcf32;
+  color: #f4c5de;
 
   font-family: "Stardos Stencil", monospace;
   font-size: 12px;
@@ -2142,7 +2142,7 @@ body,
   border: 1px solid rgba(255, 207, 50, .42);
   border-radius: 50%;
 
-  color: #ffcf32;
+  color: #f4c5de;
 
   background: rgba(255, 207, 50, .055);
 
@@ -2178,7 +2178,7 @@ body,
 }
 
 .resort-discord-link__arrow {
-  color: #ffcf32;
+  color: #f4c5de;
 
   font-size: 16px;
 }
@@ -2405,7 +2405,7 @@ body,
 .hidden-admin-kicker {
   display: block;
   margin-top: 14px;
-  color: #ffcf32;
+  color: #f4c5de;
   font-family: "Stardos Stencil", monospace;
   font-size: 9px;
   font-weight: 900;
@@ -2454,7 +2454,7 @@ body,
 }
 
 .hidden-admin-login input:focus {
-  border-color: #ffcf32;
+  border-color: #f4c5de;
   box-shadow: 0 0 0 3px rgba(255, 207, 50, .08);
 }
 
@@ -2465,7 +2465,7 @@ body,
   border: 1px solid #b68a1d;
   border-radius: 6px;
   color: #18110b;
-  background: #ffcf32;
+  background: #f4c5de;
   cursor: pointer;
   font-size: 10px;
   font-weight: 950;
@@ -2740,11 +2740,11 @@ body,
 }
 
 .wall-tag--handstyle .wall-tag__signature {
-  color: #ffcf32;
+  color: #f4c5de;
 }
 
 .wall-tag--stencil .wall-tag__signature {
-  color: #74dcff;
+  color: #94dcd7;
 }
 
 .wall-tag--marker .wall-tag__signature {
@@ -3188,7 +3188,7 @@ body,
 .wall-tag--wall.wall-tag--handstyle .wall-tag__signature,
 .wall-tag--focus.wall-tag--handstyle .wall-tag__signature {
   font-family: "Special Elite", monospace !important;
-  color: #ffcf32 !important;
+  color: #f4c5de !important;
 }
 
 /* Photo attachments are accents, not the main event. Preserve room for the
