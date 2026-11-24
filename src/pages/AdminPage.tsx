@@ -68,6 +68,41 @@ export default function AdminPage() {
     }
   }
 
+  function toggleSelected(id: string) {
+    if (bulkWorking) return;
+    setSelected((current) => current.includes(id)
+      ? current.filter((value) => value !== id)
+      : [...current, id]);
+  }
+
+  async function deleteSelection() {
+    const ids = tags.filter((tag) => selected.includes(tag.id)).map((tag) => tag.id);
+    if (!ids.length || bulkWorking) return;
+    if (!window.confirm(`Delete ${ids.length} selected posts permanently? This cannot be undone.`)) return;
+    setBulkWorking(true);
+    setMessage("");
+    let completed = 0;
+    let failed = 0;
+    for (const id of ids) {
+      setProgress(`Processing ${completed + failed + 1} / ${ids.length}`);
+      try {
+        const removed = await deleteTagWithCredentials(id, credentials);
+        if (removed) {
+          completed++;
+          setTags((previous) => previous.filter((tag) => tag.id !== id));
+          setSelected((previous) => previous.filter((value) => value !== id));
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+    setProgress("");
+    setBulkWorking(false);
+    setMessage(failed ? `Removed ${completed}. ${failed} could not be removed and remain selected.` : `Removed ${completed} posts.`);
+  }
+
   if (!signedIn) {
     return <main className="admin-shell"><form className="admin-login" onSubmit={(event) => void signIn(event)}>
       <ShieldCheck size={34} />
