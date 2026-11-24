@@ -13,6 +13,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkWorking, setBulkWorking] = useState(false);
+  const [progress, setProgress] = useState("");
 
   async function refresh() {
     setLoading(true);
