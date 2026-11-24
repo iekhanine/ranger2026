@@ -20,7 +20,9 @@ export default function AdminPage() {
   async function refresh() {
     setLoading(true);
     try {
-      setTags(await getTags());
+      const loaded = await getTags();
+      setTags(loaded);
+      setSelected((current) => current.filter((id) => loaded.some((tag) => tag.id === id)));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to load posts.");
     } finally {
@@ -61,6 +63,7 @@ export default function AdminPage() {
         return;
       }
       setTags((current) => current.filter((item) => item.id !== tag.id));
+      setSelected((current) => current.filter((id) => id !== tag.id));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to delete post.");
     } finally {
@@ -145,7 +148,7 @@ export default function AdminPage() {
       <label className="admin-item-select"><input type="checkbox" checked={selected.includes(tag.id)} disabled={bulkWorking} onChange={() => toggleSelected(tag.id)} aria-label={`Select post by ${tag.name}`} /></label>
       {tag.media_url && <img src={tag.media_url} alt="" className="admin-item__image"/>}
       <div className="admin-item__body"><strong>{tag.name}</strong><p>{tag.message}</p><small>{new Date(tag.created_at).toLocaleString()}</small></div>
-      <button type="button" className="admin-delete" disabled={working===tag.id} onClick={() => void remove(tag)} aria-label={`Delete post by ${tag.name}`}><Trash2 size={16}/></button>
+      <button type="button" className="admin-delete" disabled={working===tag.id || bulkWorking} onClick={() => void remove(tag)} aria-label={`Delete post by ${tag.name}`}><Trash2 size={16}/></button>
     </article>)}</div>
   </main>;
 }
