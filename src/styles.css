@@ -3293,3 +3293,25 @@ body,
   overflow: visible !important;
   justify-content: flex-start !important;
 }
+
+
+/* Standalone administration must scroll independently of the fixed-size graffiti stage. */
+html:has(.admin-shell),body:has(.admin-shell),#root:has(.admin-shell){
+ height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;
+}
+.admin-shell{padding-bottom:100px!important;min-height:100vh;overflow:visible!important;}
+.admin-nav-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.admin-bulk-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;margin:12px 0 16px;border:1px solid #59465a;border-radius:8px;background:#241c29;box-shadow:0 8px 25px #0006}
+.admin-select-all,.admin-item-select{display:flex;align-items:center;gap:9px;cursor:pointer}
+.admin-select-all input,.admin-item-select input{width:18px;height:18px;accent-color:#ea7cab;cursor:pointer}
+.admin-selection-count,.admin-count{color:#bfb2c3;font-size:13px}
+.admin-clear-selection{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#f0bed9;cursor:pointer}
+.admin-bulk-delete{display:flex;align-items:center;justify-content:center;gap:8px;margin-left:auto;padding:10px 15px;background:#9e315d;color:white;border:1px solid #ce719c;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
+.admin-bulk-delete:disabled{opacity:.45;cursor:not-allowed}
+.admin-item{grid-template-columns:auto auto minmax(0,1fr) auto!important}
+.admin-item--selected{border-color:#d676aa!important;background:#261924!important}
+.admin-item__body{overflow-wrap:anywhere}
+.admin-item-select{padding:8px}
+.admin-bottom-actions{padding:30px 0;text-align:center}
+.admin-empty{padding:35px;text-align:center;color:#bbaab7;border:1px dashed #605263}
+@media(max-width:620px){.admin-shell{width:calc(100% - 24px)!important;padding-top:24px!important}.admin-toolbar{align-items:flex-start!important;flex-direction:column!important}.admin-bulk-toolbar{gap:9px;padding:12px}.admin-bulk-delete{margin-left:0;width:100%}.admin-item{grid-template-columns:auto minmax(0,1fr) auto!important;gap:8px!important}.admin-item__image{grid-column:2;grid-row:2}.admin-item__body{grid-column:2;grid-row:1}.admin-delete{grid-column:3;grid-row:1}}
