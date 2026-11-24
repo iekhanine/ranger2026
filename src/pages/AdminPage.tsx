@@ -122,12 +122,25 @@ export default function AdminPage() {
     <div className="admin-toolbar"><div><span>PENNY'S BIRTHDAY WALL</span><h1>Manage Wall Tags</h1></div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         <a href="/" className="admin-secondary"><ArrowLeft size={15}/> Wall</a>
-        <button type="button" className="admin-secondary" onClick={() => void refresh()} disabled={loading}><RefreshCw size={15}/> Refresh</button>
-        <button type="button" className="admin-secondary" onClick={() => { setSignedIn(false); setCredentials({username:"",password:""});setTags([]); }}><LogOut size={15}/> Lock</button>
+        <button type="button" className="admin-secondary" onClick={() => void refresh()} disabled={loading || bulkWorking}><RefreshCw size={15}/> Refresh</button>
+        <button type="button" className="admin-secondary" onClick={() => { setSignedIn(false); setCredentials({username:"",password:""});setTags([]);setSelected([]); }} disabled={bulkWorking}><LogOut size={15}/> Lock</button>
       </div>
     </div>
-    {message && <div className="admin-message" role="status">{message}</div>}
-    <p style={{color:"#c4bec2",fontSize:13}}>{loading ? "Loading posts…" : `${tags.length} post${tags.length === 1 ? "" : "s"} on the wall. Delete the old Ranger posts individually to give Penny a fresh start.`}</p>
+    <div className="admin-bulk-toolbar">
+      <label className="admin-select-all">
+        <input type="checkbox" checked={tags.length > 0 && selected.length === tags.length}
+          disabled={bulkWorking || tags.length === 0}
+          onChange={() => setSelected(selected.length === tags.length ? [] : tags.map((tag) => tag.id))} />
+        Select all ({tags.length})
+      </label>
+      <span className="admin-selection-count">{selected.length} selected</span>
+      <button type="button" className="admin-clear-selection" disabled={bulkWorking} onClick={() => setSelected([])}>Clear selection</button>
+      <button type="button" className="admin-bulk-delete" disabled={bulkWorking || selected.length === 0} onClick={() => void deleteSelection()}>
+        <Trash2 size={16} /> {bulkWorking ? "Working…" : `Delete selected (${selected.length})`}
+      </button>
+    </div>
+    {(message || progress) && <div className="admin-message" role="status">{progress || message}</div>}
+    <p className="admin-count">{loading ? "Loading posts…" : `${tags.length} posts. Select individually or all at once.`}</p>
     <div className="admin-list">{[...tags].reverse().map((tag) => <article className="admin-item" key={tag.id}>
       {tag.media_url && <img src={tag.media_url} alt="" className="admin-item__image"/>}
       <div className="admin-item__body"><strong>{tag.name}</strong><p>{tag.message}</p><small>{new Date(tag.created_at).toLocaleString()}</small></div>
