@@ -142,6 +142,7 @@ export default function AdminPage() {
     {(message || progress) && <div className="admin-message" role="status">{progress || message}</div>}
     <p className="admin-count">{loading ? "Loading posts…" : `${tags.length} posts. Select individually or all at once.`}</p>
     <div className="admin-list">{[...tags].reverse().map((tag) => <article className={`admin-item ${selected.includes(tag.id) ? "admin-item--selected" : ""}`} key={tag.id}>
+      <label className="admin-item-select"><input type="checkbox" checked={selected.includes(tag.id)} disabled={bulkWorking} onChange={() => toggleSelected(tag.id)} aria-label={`Select post by ${tag.name}`} /></label>
       {tag.media_url && <img src={tag.media_url} alt="" className="admin-item__image"/>}
       <div className="admin-item__body"><strong>{tag.name}</strong><p>{tag.message}</p><small>{new Date(tag.created_at).toLocaleString()}</small></div>
       <button type="button" className="admin-delete" disabled={working===tag.id} onClick={() => void remove(tag)} aria-label={`Delete post by ${tag.name}`}><Trash2 size={16}/></button>
